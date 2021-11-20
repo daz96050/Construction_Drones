@@ -115,9 +115,13 @@ local get_drone_radius = function() return 0.3 end
 
 local print = function(string)
     -- if not data.debug then return end
-    local tick = game.tick
-    log(tick .. " | " .. string)
-    game.print(tick .. " | " .. string)
+    if game ~= nil then
+        local tick = game.tick
+        log(tick .. " | " .. string)
+        game.print(tick .. " | " .. string)
+    else
+        log(string)
+    end
 end
 
 local oofah = (2 ^ 0.5) / 2

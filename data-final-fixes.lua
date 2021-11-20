@@ -16,5 +16,5 @@ end
 local name = names.units.construction_drone
 data.raw.unit[name].collision_mask = {
     "not-colliding-with-itself", drone_collision_mask,
-    "consider-tile-transitions"
+    "consider-tile-transitions", "water-tile"
 }

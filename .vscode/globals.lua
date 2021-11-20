@@ -10,6 +10,7 @@ remote = nil
 rendering = nil
 script = nil
 SD = nil
+serpent = nil
 settings = nil
 
 -- function
