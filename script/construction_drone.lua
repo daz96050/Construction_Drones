@@ -1698,7 +1698,7 @@ local process_upgrade_command = function(drone_data)
     surface.create_entity {
         name = prototype.name,
         position = position,
-        direction = neighbour.direction,
+        direction = direction,
         fast_replace = true,
         force = target.force,
         spill = false,
