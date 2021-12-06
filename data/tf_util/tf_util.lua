@@ -4,6 +4,7 @@ local is_sprite_def = function(array)
     return array.width and array.height and (array.filename or array.stripes or array.filenames)
 end
 
+
 util.is_sprite_def = is_sprite_def
 
 local recursive_hack_scale
@@ -31,6 +32,8 @@ recursive_hack_scale = function(array, scale)
         end
     end
 end
+
+
 util.recursive_hack_scale = recursive_hack_scale
 
 local recursive_hack_animation_speed
@@ -44,6 +47,8 @@ recursive_hack_animation_speed = function(array, scale)
         end
     end
 end
+
+
 util.recursive_hack_animation_speed = recursive_hack_animation_speed
 
 local recursive_hack_tint
@@ -57,6 +62,8 @@ recursive_hack_tint = function(array, tint)
         end
     end
 end
+
+
 util.recursive_hack_tint = recursive_hack_tint
 
 local recursive_hack_make_hr
@@ -72,6 +79,8 @@ recursive_hack_make_hr = function(prototype)
         end
     end
 end
+
+
 util.recursive_hack_make_hr = recursive_hack_make_hr
 
 util.scale_box = function(box, scale)
@@ -81,6 +90,7 @@ util.scale_box = function(box, scale)
     box[2][2] = box[2][2] * scale
     return box
 end
+
 
 util.scale_boxes = function(prototype, scale)
     for k, v in pairs {"collision_box", "selection_box"} do
@@ -96,6 +106,7 @@ util.scale_boxes = function(prototype, scale)
     end
 end
 
+
 util.remove_flag = function(prototype, flag)
     if not prototype.flags then
         return
@@ -108,6 +119,7 @@ util.remove_flag = function(prototype, flag)
     end
 end
 
+
 util.add_flag = function(prototype, flag)
     if not prototype.flags then
         return
@@ -115,8 +127,8 @@ util.add_flag = function(prototype, flag)
     table.insert(prototype.flags, flag)
 end
 
-util.base_player = function()
 
+util.base_player = function()
     local player = util.table.deepcopy(data.raw.player.player or error("Wat man cmon why"))
     player.ticks_to_keep_gun = 600
     player.ticks_to_keep_aiming_direction = 100
@@ -125,17 +137,21 @@ util.base_player = function()
     return player
 end
 
+
 util.path = function(str)
     return "__Updated_Construction_Drones__/" .. str
 end
+
 
 util.empty_sound = function()
     return {filename = util.path("data/tf_util/empty-sound.ogg"), volume = 0}
 end
 
+
 util.empty_sprite = function()
     return {filename = util.path("data/tf_util/empty-sprite.png"), height = 1, width = 1, frame_count = 1}
 end
+
 
 util.damage_type = function(name)
     if not data.raw["damage-type"][name] then
@@ -144,6 +160,7 @@ util.damage_type = function(name)
     return name
 end
 
+
 util.ammo_category = function(name)
     if not data.raw["ammo-category"][name] then
         data:extend{{type = "ammo-category", name = name, localised_name = name}}
@@ -151,18 +168,22 @@ util.ammo_category = function(name)
     return name
 end
 
+
 util.base_gun = function(name)
     return {name = name, localised_name = name, type = "gun", stack_size = 1, flags = {}}
 end
+
 
 util.base_ammo = function(name)
     return {name = name, localised_name = name, type = "ammo", stack_size = 1, magazine_size = 1, flags = {}}
 end
 
+
 local base_speed = 0.25
 util.speed = function(multiplier)
     return multiplier * SD(base_speed)
 end
+
 
 util.remove_from_list = function(list, name)
     local remove = table.remove
@@ -173,6 +194,7 @@ util.remove_from_list = function(list, name)
     end
 end
 
+
 local recursive_hack_something
 recursive_hack_something = function(prototype, key, value)
     for k, v in pairs(prototype) do
@@ -182,6 +204,8 @@ recursive_hack_something = function(prototype, key, value)
     end
     prototype[key] = value
 end
+
+
 util.recursive_hack_something = recursive_hack_something
 
 local recursive_hack_blend_mode
@@ -196,21 +220,23 @@ recursive_hack_blend_mode = function(prototype, value)
     end
 end
 
-util.copy = util.table.deepcopy
 
-util.prototype = require("data/tf_util/prototype_util")
+util.copy = util.table.deepcopy
 
 util.flying_unit_collision_mask = function()
     return {"not-colliding-with-itself", "layer-15"}
 end
 
+
 util.ground_unit_collision_mask = function()
     return {"not-colliding-with-itself", "doodad-layer", "item-layer"}
 end
 
+
 util.projectile_collision_mask = function()
     return {"layer-15", "player-layer", "train-layer"}
 end
+
 
 util.shift_box = function(box, shift)
     local left_top = box[1]
@@ -222,11 +248,13 @@ util.shift_box = function(box, shift)
     return box
 end
 
+
 util.shift_layer = function(layer, shift)
     layer.shift = layer.shift or {0, 0}
     layer.shift[1] = layer.shift[1] + shift[1]
     layer.shift[2] = layer.shift[2] + shift[2]
     return layer
 end
+
 
 return util

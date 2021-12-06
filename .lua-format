@@ -35,3 +35,4 @@ single_quote_to_double_quote: true
 # spaces_inside_table_braces: false
 # spaces_around_equals_in_field: true
 # line_breaks_after_function_body: 1
+line_breaks_after_function_body: 2

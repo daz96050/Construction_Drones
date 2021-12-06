@@ -1,7 +1,23 @@
 local pairs = pairs
 local beams = names.beams
 local proxy_name = names.entities.construction_drone_proxy_chest
-local drone_range = 64
+
+-- Function forward declares
+local update_drone_sticker
+local process_drone_command
+local process_return_to_player_command
+
+-- RPC
+remote.add_interface("construction_drone", {
+    set_debug = function(bool)
+        data.debug = bool
+    end
+,
+    dump = function()
+        -- print(serpent.block(data))
+    end
+,
+})
 
 drone_prototypes = {[names.units.construction_drone] = {interact_range = 5, return_to_character_range = -1}}
 
@@ -12,14 +28,33 @@ local unique_index = function(entity)
     return entity.surface.index .. entity.name .. entity.position.x .. entity.position.y
 end
 
+
 local is_commandable = function(string)
     return drone_prototypes[string] ~= nil
 end
+
 
 local ghost_type = "entity-ghost"
 local tile_ghost_type = "tile-ghost"
 local tile_deconstruction_proxy = "deconstructible-tile-proxy"
 local cliff_type = "cliff"
+
+local sin, cos = math.sin, math.cos
+local angle = util.angle
+local oofah = (2 ^ 0.5) / 2
+local radius_map
+local ranges = {interact = 1, return_to_character = 3}
+local floor = math.floor
+local random = math.random
+local proxy_position = {1000000, 1000000}
+
+local belt_connectible_type = {
+    ["transport-belt"] = 2,
+    ["underground-belt"] = 4,
+    ["splitter"] = 8,
+    ["loader"] = 2,
+    ["loader-1x1"] = 2,
+}
 
 local drone_pathfind_flags = {
     allow_destroy_friendly_entities = false,
@@ -36,7 +71,6 @@ local drone_orders = {
     upgrade = 4,
     request_proxy = 5,
     cliff_deconstruct = 8,
-    follow = 9,
     return_to_character = 10,
 }
 
@@ -66,11 +100,8 @@ local get_prototype = function(name)
     return prototype
 end
 
-local sin, cos = math.sin, math.cos
-local angle = util.angle
 
 local get_beam_orientation = function(source_position, target_position)
-
     -- Angle in rads
     local angle = angle(target_position, source_position)
 
@@ -92,20 +123,17 @@ local get_beam_orientation = function(source_position, target_position)
 
 end
 
-local print = function(string)
-    -- if not data.debug then return end
-    if game ~= nil then
-        local tick = game.tick
-        log(tick .. " | " .. string)
-        game.print(tick .. " | " .. string)
-    else
-        log(string)
-    end
-end
 
-local oofah = (2 ^ 0.5) / 2
-
-local radius_map
+-- local print = function(string)
+--     -- if not data.debug then return end
+--     if game ~= nil then
+--         local tick = game.tick
+--         log(tick .. " | " .. string)
+--         game.print(tick .. " | " .. string)
+--     else
+--         log(string)
+--     end
+-- end
 
 local get_radius_map = function()
     -- Caching radius map, deliberately not local or data
@@ -119,7 +147,6 @@ local get_radius_map = function()
     return radius_map
 end
 
-local ranges = {interact = 1, return_to_character = 3}
 
 local get_radius = function(entity, range, goto_entity)
     local radius
@@ -150,6 +177,7 @@ local get_radius = function(entity, range, goto_entity)
     return radius
 end
 
+
 local distance = function(position_1, position_2)
     local x1 = position_1[1] or position_1.x
     local y1 = position_1[2] or position_1.y
@@ -158,13 +186,13 @@ local distance = function(position_1, position_2)
     return (((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1))) ^ 0.5
 end
 
+
 local in_construction_range = function(drone, target)
     local distance = distance(drone.position, target.position) - 2
     return distance <= ((get_radius(drone, ranges.interact) + (get_radius(target))))
 end
 
-local floor = math.floor
-local random = math.random
+
 local stack_from_product = function(product)
     local count = floor(product.amount or (random() * (product.amount_max - product.amount_min) + product.amount_min))
     if count < 1 then
@@ -175,7 +203,6 @@ local stack_from_product = function(product)
     return stack
 end
 
-local proxy_position = {1000000, 1000000}
 
 local get_proxy_chest = function(drone)
     local index = drone.unit_number
@@ -187,6 +214,7 @@ local get_proxy_chest = function(drone)
     data.proxy_chests[index] = new
     return new
 end
+
 
 local get_drone_inventory = function(drone_data)
     local inventory = drone_data.inventory
@@ -200,6 +228,7 @@ local get_drone_inventory = function(drone_data)
     return drone_data.inventory
 end
 
+
 local get_drone_first_stack = function(drone_data)
     local inventory = get_drone_inventory(drone_data)
     if inventory.is_empty() then
@@ -212,6 +241,7 @@ local get_drone_first_stack = function(drone_data)
     end
 end
 
+
 local inventories = function(entity)
     local get = entity.get_inventory
     local inventories = {}
@@ -221,13 +251,6 @@ local inventories = function(entity)
     return inventories
 end
 
-local belt_connectible_type = {
-    ["transport-belt"] = 2,
-    ["underground-belt"] = 4,
-    ["splitter"] = 8,
-    ["loader"] = 2,
-    ["loader-1x1"] = 2,
-}
 
 local can_player_spawn_drones = function(player)
     if not player.is_shortcut_toggled("construction-drone-toggle") then
@@ -237,6 +260,7 @@ local can_player_spawn_drones = function(player)
     local count = player.get_item_count(names.units.construction_drone) - (data.request_count[player.index] or 0)
     return count > 0
 end
+
 
 local transfer_stack = function(destination, source_entity, stack)
     if source_entity.is_player() and source_entity.cheat_mode then
@@ -272,6 +296,7 @@ local transfer_stack = function(destination, source_entity, stack)
     return transferred
 end
 
+
 local transfer_inventory = function(source, destination)
     local insert = destination.insert
     local remove = source.remove
@@ -287,6 +312,7 @@ local transfer_inventory = function(source, destination)
     end
 end
 
+
 local rip_inventory = function(inventory, list)
     if inventory.is_empty() then
         return
@@ -295,6 +321,7 @@ local rip_inventory = function(inventory, list)
         list[name] = (list[name] or 0) + count
     end
 end
+
 
 local contents = function(entity)
     local contents = {}
@@ -328,6 +355,7 @@ local contents = function(entity)
     return contents
 end
 
+
 local take_product_stacks = function(inventory, products)
     local insert = inventory.insert
     local to_spill = {}
@@ -344,6 +372,7 @@ local take_product_stacks = function(inventory, products)
         end
     end
 end
+
 
 local make_path_request = function(drone_data, player, target)
     local prototype = get_prototype(names.units.construction_drone)
@@ -367,14 +396,6 @@ local make_path_request = function(drone_data, player, target)
 
 end
 
-remote.add_interface("construction_drone", {
-    set_debug = function(bool)
-        data.debug = bool
-    end,
-    dump = function()
-        -- print(serpent.block(data))
-    end,
-})
 
 local drone_stack_capacity
 local get_drone_stack_capacity = function(force)
@@ -385,6 +406,7 @@ local get_drone_stack_capacity = function(force)
     return drone_stack_capacity
 end
 
+
 local get_build_item = function(prototype, player)
     local items = prototype.items_to_place_this
     for _, item in pairs(items) do
@@ -393,6 +415,7 @@ local get_build_item = function(prototype, player)
         end
     end
 end
+
 
 local validate = function(entities)
     for k, entity in pairs(entities) do
@@ -403,9 +426,6 @@ local validate = function(entities)
     return entities
 end
 
-local update_drone_sticker
-
-local process_drone_command
 
 local make_player_drone = function(player)
     local position = player.surface.find_non_colliding_position(names.units.construction_drone, player.position, 5, 0.5,
@@ -430,7 +450,6 @@ local make_player_drone = function(player)
     return drone
 end
 
-local process_return_to_player_command
 
 local set_drone_order = function(drone, drone_data)
     drone.ai_settings.path_resolution_modifier = 0
@@ -439,6 +458,7 @@ local set_drone_order = function(drone, drone_data)
     drone_data.entity = drone
     return process_drone_command(drone_data)
 end
+
 
 local find_a_player = function(drone_data)
     local entity = drone_data.entity
@@ -468,6 +488,7 @@ local find_a_player = function(drone_data)
     end
 end
 
+
 local drone_wait = function(drone_data, ticks)
     local drone = drone_data.entity
     if not (drone and drone.valid) then
@@ -480,6 +501,7 @@ local drone_wait = function(drone_data, ticks)
         radius = get_radius(drone),
     }
 end
+
 
 local set_drone_idle = function(drone)
     if not (drone and drone.valid) then
@@ -500,6 +522,7 @@ local set_drone_idle = function(drone)
     set_drone_order(drone, {})
 
 end
+
 
 local check_ghost = function(entity, player)
     if not (entity and entity.valid) then
@@ -563,6 +586,7 @@ local check_ghost = function(entity, player)
 
     make_path_request(drone_data, player, target)
 end
+
 
 local check_upgrade = function(entity, player)
 
@@ -628,6 +652,7 @@ local check_upgrade = function(entity, player)
     make_path_request(drone_data, player, target)
 end
 
+
 local check_proxy = function(entity, player)
     if not (entity and entity.valid) then
         return
@@ -660,6 +685,7 @@ local check_proxy = function(entity, player)
     data.already_targeted[unique_index(entity)] = true
 end
 
+
 local check_cliff_deconstruction = function(entity, player)
     local cliff_destroying_item = entity.prototype.cliff_explosive_prototype
     if not cliff_destroying_item then
@@ -681,6 +707,7 @@ local check_cliff_deconstruction = function(entity, player)
     data.already_targeted[unique_index(entity)] = true
 
 end
+
 
 local check_deconstruction = function(entity, player)
     if not (entity and entity.valid) then
@@ -779,6 +806,7 @@ local check_deconstruction = function(entity, player)
     end
 end
 
+
 local repair_items
 local get_repair_items = function()
     if repair_items then
@@ -793,6 +821,7 @@ local get_repair_items = function()
     end
     return repair_items
 end
+
 
 local check_repair = function(entity, player)
 
@@ -845,6 +874,7 @@ local check_repair = function(entity, player)
 
 end
 
+
 local check_job = function(player, job)
 
     if job.type == drone_orders.construct then
@@ -873,6 +903,7 @@ local check_job = function(player, job)
     end
 
 end
+
 
 local ignored_types = {
     "resource",
@@ -952,11 +983,13 @@ local scan_for_nearby_jobs = function(player, area)
 
     end
 
-    for k, entity in pairs(entities) do
+
+    for _, entity in pairs(entities) do
         check_entity(entity)
     end
 
 end
+
 
 local check_player_jobs = function(player)
 
@@ -972,7 +1005,7 @@ local check_player_jobs = function(player)
     local count = math.min(5, player.get_item_count(names.units.construction_drone) -
                                (data.request_count[player.index] or 0))
 
-    for k = 1, count do
+    for _ = 1, count do
         local index, job = next(queue)
         if not index then
             return
@@ -983,6 +1016,7 @@ local check_player_jobs = function(player)
     end
 
 end
+
 
 local search_offsets = {}
 local search_refresh = nil
@@ -1001,9 +1035,11 @@ local setup_search_offsets = function(div)
 
     table.sort(search_offsets, function(a, b)
         return distance(a[1], {0, 0}) < distance(b[1], {0, 0})
-    end)
+    end
+)
     search_refresh = #search_offsets
 end
+
 
 local check_search_queue = function()
     local index, search_data = next(data.search_queue)
@@ -1029,6 +1065,7 @@ local check_search_queue = function()
     scan_for_nearby_jobs(player, search_area)
 end
 
+
 local insert = table.insert
 local schedule_new_searches = function()
 
@@ -1040,7 +1077,7 @@ local schedule_new_searches = function()
     for k, player in pairs(game.connected_players) do
         local index = player.index
         if can_player_spawn_drones(player) and not next(data.job_queue[index] or {}) then
-            for i, v in pairs(search_offsets) do
+            for i, _ in pairs(search_offsets) do
                 insert(queue, {player_index = index, area_index = i})
             end
         end
@@ -1048,23 +1085,24 @@ local schedule_new_searches = function()
 
 end
 
-local on_tick = function(event)
 
+local on_tick = function(event)
     check_search_queue()
 
-    for k, player in pairs(game.connected_players) do
+    for _, player in pairs(game.connected_players) do
         check_player_jobs(player)
     end
 
     if event.tick % search_refresh == 0 then
         schedule_new_searches()
     end
-
 end
+
 
 local get_build_time = function(drone_data)
     return random(15, 25)
 end
+
 
 local clear_extra_targets = function(drone_data)
     if not drone_data.extra_targets then
@@ -1087,6 +1125,7 @@ local clear_extra_targets = function(drone_data)
 
 end
 
+
 local clear_target = function(drone_data)
 
     local target = drone_data.target
@@ -1105,13 +1144,14 @@ local clear_target = function(drone_data)
 
 end
 
+
 local cancel_drone_order = function(drone_data, on_removed)
     local drone = drone_data.entity
     if not (drone and drone.valid) then
         return
     end
-    local unit_number = drone.unit_number
 
+    -- local unit_number = drone.unit_number
     -- print("Drone command cancelled "..unit_number.." - "..game.tick)
 
     clear_target(drone_data)
@@ -1142,10 +1182,8 @@ local cancel_drone_order = function(drone_data, on_removed)
 
 end
 
-local floor = math.floor
 
 local move_to_order_target = function(drone_data, target)
-
     local drone = drone_data.entity
 
     if drone.surface ~= target.surface then
@@ -1168,8 +1206,8 @@ local move_to_order_target = function(drone_data, target)
 
 end
 
-local move_to_player = function(drone_data, player)
 
+local move_to_player = function(drone_data, player)
     local drone = drone_data.entity
 
     if drone.surface ~= player.surface then
@@ -1192,12 +1230,12 @@ local move_to_player = function(drone_data, player)
 
 end
 
+
 local insert = table.insert
 
 local offsets = {{0, 0}, {0.25, 0}, {0, 0.25}, {0.25, 0.25}}
 
 update_drone_sticker = function(drone_data)
-
     local sticker = drone_data.sticker
     if sticker and sticker.valid then
         sticker.destroy()
@@ -1206,7 +1244,7 @@ update_drone_sticker = function(drone_data)
 
     local renderings = drone_data.renderings
     if renderings then
-        for k, v in pairs(renderings) do
+        for _, v in pairs(renderings) do
             rendering.destroy(v)
         end
         drone_data.renderings = nil
@@ -1256,7 +1294,7 @@ update_drone_sticker = function(drone_data)
 
     local offset_index = 1
 
-    for name, count in pairs(contents) do
+    for name, _ in pairs(contents) do
         local offset = offsets[offset_index]
         insert(renderings, rendering.draw_sprite {
             sprite = "item/" .. name,
@@ -1272,6 +1310,7 @@ update_drone_sticker = function(drone_data)
     end
 
 end
+
 
 local process_pickup_command = function(drone_data)
     -- print("Procesing pickup command")
@@ -1301,17 +1340,17 @@ local process_pickup_command = function(drone_data)
 
 end
 
-local get_dropoff_stack = function(drone_data)
-    local stack = drone_data.dropoff.stack
-    if stack and stack.valid and stack.valid_for_read then
-        return stack
-    end
-    return get_drone_first_stack(drone_data)
-end
+
+-- local get_dropoff_stack = function(drone_data)
+--     local stack = drone_data.dropoff.stack
+--     if stack and stack.valid and stack.valid_for_read then
+--         return stack
+--     end
+--     return get_drone_first_stack(drone_data)
+-- end
 
 local process_dropoff_command = function(drone_data)
-
-    local drone = drone_data.entity
+    -- local drone = drone_data.entity
     -- print("Procesing dropoff command. "..drone.unit_number)
 
     if drone_data.player then
@@ -1322,24 +1361,25 @@ local process_dropoff_command = function(drone_data)
 
 end
 
-local unit_move_away = function(unit, target, multiplier)
-    local multiplier = multiplier or 1
-    local r = (get_radius(target) + get_radius(unit)) * (1 + (random() * 4))
-    r = r * multiplier
-    local position = {x = nil, y = nil}
-    if unit.position.x > target.position.x then
-        position.x = unit.position.x + r
-    else
-        position.x = unit.position.x - r
-    end
-    if unit.position.y > target.position.y then
-        position.y = unit.position.y + r
-    else
-        position.y = unit.position.y - r
-    end
-    unit.speed = unit.prototype.speed * (0.95 + (random() / 10))
-    unit.set_command {type = defines.command.go_to_location, destination = position, radius = 2}
-end
+
+-- local unit_move_away = function(unit, target, multiplier)
+--     local multiplier = multiplier or 1
+--     local r = (get_radius(target) + get_radius(unit)) * (1 + (random() * 4))
+--     r = r * multiplier
+--     local position = {x = nil, y = nil}
+--     if unit.position.x > target.position.x then
+--         position.x = unit.position.x + r
+--     else
+--         position.x = unit.position.x - r
+--     end
+--     if unit.position.y > target.position.y then
+--         position.y = unit.position.y + r
+--     else
+--         position.y = unit.position.y - r
+--     end
+--     unit.speed = unit.prototype.speed * (0.95 + (random() / 10))
+--     unit.set_command {type = defines.command.go_to_location, destination = position, radius = 2}
+-- end
 
 local unit_clear_target = function(unit, target)
     local r = get_radius(unit) + get_radius(target) + 1
@@ -1360,6 +1400,7 @@ local unit_clear_target = function(unit, target)
 
 end
 
+
 local get_extra_target = function(drone_data)
     if not drone_data.extra_targets then
         return
@@ -1379,6 +1420,7 @@ local get_extra_target = function(drone_data)
         return next_target
     end
 end
+
 
 local revive_param = {return_item_request_proxy = true, raise_revive = true}
 local process_construct_command = function(drone_data)
@@ -1456,6 +1498,7 @@ local process_construct_command = function(drone_data)
     return drone_wait(drone_data, build_time)
 end
 
+
 local process_failed_command = function(drone_data)
 
     local drone = drone_data.entity
@@ -1472,6 +1515,7 @@ local process_failed_command = function(drone_data)
     process_return_to_player_command(drone_data, true)
 
 end
+
 
 local process_deconstruct_command = function(drone_data)
     -- print("Processing deconstruct command")
@@ -1548,6 +1592,7 @@ local process_deconstruct_command = function(drone_data)
     return process_drone_command(drone_data)
 end
 
+
 local process_repair_command = function(drone_data)
     -- print("Processing repair command")
     local target = drone_data.target
@@ -1617,6 +1662,7 @@ local process_repair_command = function(drone_data)
 
     return drone_wait(drone_data, ticks_to_repair)
 end
+
 
 local process_upgrade_command = function(drone_data)
     -- print("Processing upgrade command")
@@ -1710,6 +1756,7 @@ local process_upgrade_command = function(drone_data)
     return drone_wait(drone_data, build_time)
 end
 
+
 local process_request_proxy_command = function(drone_data)
     -- print("Processing request proxy command")
 
@@ -1796,6 +1843,7 @@ local process_request_proxy_command = function(drone_data)
     return drone_wait(drone_data, build_time)
 end
 
+
 local process_deconstruct_cliff_command = function(drone_data)
     -- print("Processing deconstruct cliff command")
     local target = drone_data.target
@@ -1840,6 +1888,7 @@ local process_deconstruct_cliff_command = function(drone_data)
 
     return set_drone_idle(drone)
 end
+
 
 local directions = {
     [defines.direction.north] = {0, -1},
@@ -1892,6 +1941,7 @@ process_return_to_player_command = function(drone_data, force)
     drone_data.entity.destroy()
 
 end
+
 
 local max = math.max
 process_drone_command = function(drone_data, result)
@@ -1962,6 +2012,7 @@ process_drone_command = function(drone_data, result)
     return set_drone_idle(drone)
 end
 
+
 local on_ai_command_completed = function(event)
     local drone_data = data.drone_commands[event.unit_number]
     if drone_data then
@@ -1969,6 +2020,7 @@ local on_ai_command_completed = function(event)
         return process_drone_command(drone_data, event.result)
     end
 end
+
 
 local on_entity_removed = function(event)
 
@@ -2006,10 +2058,12 @@ local on_entity_removed = function(event)
 
 end
 
+
 local on_player_created = function(event)
     local player = game.get_player(event.player_index)
     player.set_shortcut_toggled("construction-drone-toggle", true)
 end
+
 
 local on_entity_cloned = function(event)
 
@@ -2041,6 +2095,7 @@ local on_entity_cloned = function(event)
 
 end
 
+
 local prune_commands = function()
     for unit_number, drone_data in pairs(data.drone_commands) do
         if not (drone_data.entity and drone_data.entity.valid) then
@@ -2053,6 +2108,7 @@ local prune_commands = function()
         end
     end
 end
+
 
 local on_script_path_request_finished = function(event)
     local drone_data = data.path_requests[event.id]
@@ -2088,6 +2144,7 @@ local on_script_path_request_finished = function(event)
 
 end
 
+
 local on_construction_drone_toggle = function(event)
     local player = game.players[event.player_index]
     local enabled = not player.is_shortcut_toggled("construction-drone-toggle")
@@ -2097,16 +2154,18 @@ local on_construction_drone_toggle = function(event)
     end
 end
 
+
 local on_lua_shortcut = function(event)
-    if event.prototype_name ~= "construction-drone-toggle" then
-        return
+    if event.prototype_name == "construction-drone-toggle" then
+        on_construction_drone_toggle(event)
     end
-    on_construction_drone_toggle(event)
 end
+
 
 local on_runtime_mod_setting_changed = function()
     setup_search_offsets(settings.global["throttling"].value)
 end
+
 
 local lib = {}
 
@@ -2138,18 +2197,20 @@ lib.on_load = function()
     on_runtime_mod_setting_changed()
 end
 
+
 lib.on_init = function()
     game.map_settings.steering.default.force_unit_fuzzy_goto_behavior = false
     game.map_settings.steering.moving.force_unit_fuzzy_goto_behavior = false
     game.map_settings.path_finder.use_path_cache = false
     global.construction_drone = global.construction_drone or data
 
-    for k, player in pairs(game.players) do
+    for _, player in pairs(game.players) do
         player.set_shortcut_toggled("construction-drone-toggle", true)
     end
 
     on_runtime_mod_setting_changed()
 end
+
 
 lib.on_configuration_changed = function()
     game.map_settings.path_finder.use_path_cache = false
@@ -2171,5 +2232,6 @@ lib.on_configuration_changed = function()
     data.already_targeted = data.already_targeted or {}
 
 end
+
 
 return lib
