@@ -14,8 +14,9 @@ local animation = {
             direction_count = 32,
             axially_symmetrical = false,
             scale = 0.4,
-            shift = util.by_pixel(0, -14)
-        }, {
+            shift = util.by_pixel(0, -14),
+        },
+        {
             filename = path .. "drone_shadow.png",
             width = 142,
             height = 56,
@@ -25,9 +26,9 @@ local animation = {
             axially_symmetrical = false,
             shift = util.by_pixel(10.5, -8.5),
             draw_as_shadow = true,
-            scale = 0.4
-        }
-    }
+            scale = 0.4,
+        },
+    },
 }
 
 local unit = {
@@ -60,16 +61,11 @@ local unit = {
             target_type = "entity",
             action = {
                 type = "direct",
-                action_delivery = {
-                    type = "beam",
-                    beam = names.beams.attack,
-                    max_length = 40,
-                    duration = 45
-                }
-            }
+                action_delivery = {type = "beam", beam = names.beams.attack, max_length = 40, duration = 45},
+            },
         },
         sound = nil,
-        animation = animation
+        animation = animation,
     },
     vision_distance = 100,
     not_controllable = true,
@@ -96,10 +92,10 @@ local unit = {
             {filename = path .. "construction_drone_10.ogg"},
             {filename = path .. "construction_drone_11.ogg"},
             {filename = path .. "construction_drone_12.ogg"},
-            {filename = path .. "construction_drone_13.ogg"}
+            {filename = path .. "construction_drone_13.ogg"},
         },
         probability = 1 / (8 * 60),
-        volume = 0.5
+        volume = 0.5,
     },
     run_animation = animation,
     minable = {result = name, mining_time = 1},
@@ -107,15 +103,11 @@ local unit = {
         destroy_when_commands_fail = false,
         allow_try_return_to_spawner = false,
         do_separation = true,
-        path_resolution_modifier = 0
+        path_resolution_modifier = 0,
     },
     light = {
+        {minimum_darkness = 0.3, intensity = 0.4, size = 10, color = {r = 1.0, g = 1.0, b = 1.0}},
         {
-            minimum_darkness = 0.3,
-            intensity = 0.4,
-            size = 10,
-            color = {r = 1.0, g = 1.0, b = 1.0}
-        }, {
             type = "oriented",
             minimum_darkness = 0.3,
             picture = {
@@ -124,15 +116,15 @@ local unit = {
                 flags = {"light"},
                 scale = 2,
                 width = 200,
-                height = 200
+                height = 200,
             },
             shift = {0, -3.5},
             size = 0.5,
             intensity = 0.6,
-            color = {r = 1.0, g = 1.0, b = 1.0}
-        }
+            color = {r = 1.0, g = 1.0, b = 1.0},
+        },
     },
-    resistances = {{type = "acid", percent = 95}}
+    resistances = {{type = "acid", percent = 95}},
 }
 
 local item = {
@@ -145,7 +137,7 @@ local item = {
     subgroup = data.raw.item["construction-robot"].subgroup,
     order = "a-" .. name,
     stack_size = 10,
-    place_result = nil -- name
+    place_result = nil, -- name
 }
 
 local recipe = {
@@ -154,11 +146,9 @@ local recipe = {
     localised_name = name,
     category = data.raw.recipe["construction-robot"].category,
     enabled = true,
-    ingredients = {
-        {"iron-plate", 5}, {"iron-gear-wheel", 5}, {"electronic-circuit", 10}
-    },
+    ingredients = {{"iron-plate", 5}, {"iron-gear-wheel", 5}, {"electronic-circuit", 10}},
     energy_required = 1,
-    result = name
+    result = name,
 }
 
 local proxy_chest_name = names.entities.construction_drone_proxy_chest
@@ -185,7 +175,7 @@ local beam_base = {
         height = 39,
         frame_count = 16,
         animation_speed = 0.5,
-        blend_mode = beam_blend_mode
+        blend_mode = beam_blend_mode,
     },
     tail = {
         filename = path .. "beams/" .. "beam-tail.png",
@@ -193,7 +183,7 @@ local beam_base = {
         width = 45,
         height = 39,
         frame_count = 16,
-        blend_mode = beam_blend_mode
+        blend_mode = beam_blend_mode,
     },
     body = {
         {
@@ -202,44 +192,49 @@ local beam_base = {
             width = 45,
             height = 39,
             frame_count = 16,
-            blend_mode = beam_blend_mode
-        }, {
+            blend_mode = beam_blend_mode,
+        },
+        {
             filename = path .. "beams/" .. "beam-body-2.png",
             line_length = 16,
             width = 45,
             height = 39,
             frame_count = 16,
-            blend_mode = beam_blend_mode
-        }, {
+            blend_mode = beam_blend_mode,
+        },
+        {
             filename = path .. "beams/" .. "beam-body-3.png",
             line_length = 16,
             width = 45,
             height = 39,
             frame_count = 16,
-            blend_mode = beam_blend_mode
-        }, {
+            blend_mode = beam_blend_mode,
+        },
+        {
             filename = path .. "beams/" .. "beam-body-4.png",
             line_length = 16,
             width = 45,
             height = 39,
             frame_count = 16,
-            blend_mode = beam_blend_mode
-        }, {
+            blend_mode = beam_blend_mode,
+        },
+        {
             filename = path .. "beams/" .. "beam-body-5.png",
             line_length = 16,
             width = 45,
             height = 39,
             frame_count = 16,
-            blend_mode = beam_blend_mode
-        }, {
+            blend_mode = beam_blend_mode,
+        },
+        {
             filename = path .. "beams/" .. "beam-body-6.png",
             line_length = 16,
             width = 45,
             height = 39,
             frame_count = 16,
-            blend_mode = beam_blend_mode
-        }
-    }
+            blend_mode = beam_blend_mode,
+        },
+    },
 }
 
 beam_base = util.copy(data.raw.beam["laser-beam"])
@@ -274,16 +269,8 @@ attack_beam.action = {
     type = "direct",
     action_delivery = {
         type = "instant",
-        target_effects = {
-            {
-                type = "damage",
-                damage = {amount = 5, type = util.damage_type(name)}
-            }
-        }
-    }
+        target_effects = {{type = "damage", damage = {amount = 5, type = util.damage_type(name)}}},
+    },
 }
 
-data:extend{
-    unit, item, recipe, proxy_chest, build_beam, deconstruct_beam, pickup_beam,
-    attack_beam
-}
+data:extend{unit, item, recipe, proxy_chest, build_beam, deconstruct_beam, pickup_beam, attack_beam}

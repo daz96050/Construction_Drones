@@ -22,8 +22,9 @@ fire_util.create_fire_pictures = function(opts)
             scale = fire_scale,
             tint = fire_tint,
             flags = fire_flags,
-            shift = {-0.0390625, -0.90625}
-        }, {
+            shift = {-0.0390625, -0.90625},
+        },
+        {
             filename = "__base__/graphics/entity/fire-flame/fire-flame-12.png",
             line_length = 8,
             width = 63,
@@ -36,8 +37,9 @@ fire_util.create_fire_pictures = function(opts)
             scale = fire_scale,
             tint = fire_tint,
             flags = fire_flags,
-            shift = {-0.015625, -0.914065}
-        }, {
+            shift = {-0.015625, -0.914065},
+        },
+        {
             filename = "__base__/graphics/entity/fire-flame/fire-flame-11.png",
             line_length = 8,
             width = 61,
@@ -50,8 +52,9 @@ fire_util.create_fire_pictures = function(opts)
             scale = fire_scale,
             tint = fire_tint,
             flags = fire_flags,
-            shift = {-0.0078125, -0.90625}
-        }, {
+            shift = {-0.0078125, -0.90625},
+        },
+        {
             filename = "__base__/graphics/entity/fire-flame/fire-flame-10.png",
             line_length = 8,
             width = 65,
@@ -64,8 +67,9 @@ fire_util.create_fire_pictures = function(opts)
             scale = fire_scale,
             tint = fire_tint,
             flags = fire_flags,
-            shift = {-0.0625, -0.64844}
-        }, {
+            shift = {-0.0625, -0.64844},
+        },
+        {
             filename = "__base__/graphics/entity/fire-flame/fire-flame-09.png",
             line_length = 8,
             width = 64,
@@ -78,8 +82,9 @@ fire_util.create_fire_pictures = function(opts)
             scale = fire_scale,
             tint = fire_tint,
             flags = fire_flags,
-            shift = {-0.03125, -0.695315}
-        }, {
+            shift = {-0.03125, -0.695315},
+        },
+        {
             filename = "__base__/graphics/entity/fire-flame/fire-flame-08.png",
             line_length = 8,
             width = 50,
@@ -92,8 +97,9 @@ fire_util.create_fire_pictures = function(opts)
             scale = fire_scale,
             tint = fire_tint,
             flags = fire_flags,
-            shift = {-0.0546875, -0.77344}
-        }, {
+            shift = {-0.0546875, -0.77344},
+        },
+        {
             filename = "__base__/graphics/entity/fire-flame/fire-flame-07.png",
             line_length = 8,
             width = 54,
@@ -106,8 +112,9 @@ fire_util.create_fire_pictures = function(opts)
             scale = fire_scale,
             tint = fire_tint,
             flags = fire_flags,
-            shift = {0.015625, -0.640625}
-        }, {
+            shift = {0.015625, -0.640625},
+        },
+        {
             filename = "__base__/graphics/entity/fire-flame/fire-flame-06.png",
             line_length = 8,
             width = 65,
@@ -120,8 +127,9 @@ fire_util.create_fire_pictures = function(opts)
             scale = fire_scale,
             tint = fire_tint,
             flags = fire_flags,
-            shift = {0, -0.83594}
-        }, {
+            shift = {0, -0.83594},
+        },
+        {
             filename = "__base__/graphics/entity/fire-flame/fire-flame-05.png",
             line_length = 8,
             width = 59,
@@ -134,8 +142,9 @@ fire_util.create_fire_pictures = function(opts)
             scale = fire_scale,
             tint = fire_tint,
             flags = fire_flags,
-            shift = {0.03125, -0.882815}
-        }, {
+            shift = {0.03125, -0.882815},
+        },
+        {
             filename = "__base__/graphics/entity/fire-flame/fire-flame-04.png",
             line_length = 8,
             width = 67,
@@ -148,8 +157,9 @@ fire_util.create_fire_pictures = function(opts)
             scale = fire_scale,
             tint = fire_tint,
             flags = fire_flags,
-            shift = {0.015625, -1.109375}
-        }, {
+            shift = {0.015625, -1.109375},
+        },
+        {
             filename = "__base__/graphics/entity/fire-flame/fire-flame-03.png",
             line_length = 8,
             width = 74,
@@ -162,8 +172,9 @@ fire_util.create_fire_pictures = function(opts)
             scale = fire_scale,
             tint = fire_tint,
             flags = fire_flags,
-            shift = {0.046875, -0.984375}
-        }, {
+            shift = {0.046875, -0.984375},
+        },
+        {
             filename = "__base__/graphics/entity/fire-flame/fire-flame-02.png",
             line_length = 8,
             width = 74,
@@ -176,8 +187,9 @@ fire_util.create_fire_pictures = function(opts)
             scale = fire_scale,
             tint = fire_tint,
             flags = fire_flags,
-            shift = {0.0078125, -0.96875}
-        }, {
+            shift = {0.0078125, -0.96875},
+        },
+        {
             filename = "__base__/graphics/entity/fire-flame/fire-flame-01.png",
             line_length = 8,
             width = 66,
@@ -190,8 +202,8 @@ fire_util.create_fire_pictures = function(opts)
             scale = fire_scale,
             tint = fire_tint,
             flags = fire_flags,
-            shift = {-0.0703125, -1.039065}
-        }
+            shift = {-0.0703125, -1.039065},
+        },
     }
 end
 

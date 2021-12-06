@@ -1,8 +1,7 @@
 local util = require("util")
 
 local is_sprite_def = function(array)
-    return array.width and array.height and
-               (array.filename or array.stripes or array.filenames)
+    return array.width and array.height and (array.filename or array.stripes or array.filenames)
 end
 
 util.is_sprite_def = is_sprite_def
@@ -14,8 +13,7 @@ recursive_hack_scale = function(array, scale)
             if is_sprite_def(v) then
                 v.scale = (v.scale or 1) * scale
                 if v.shift then
-                    v.shift[1], v.shift[2] = v.shift[1] * scale,
-                                             v.shift[2] * scale
+                    v.shift[1], v.shift[2] = v.shift[1] * scale, v.shift[2] * scale
                 end
             end
             if v.source_offset then
@@ -27,8 +25,7 @@ recursive_hack_scale = function(array, scale)
                 v.projectile_center[2] = v.projectile_center[2] * scale
             end
             if v.projectile_creation_distance then
-                v.projectile_creation_distance =
-                    v.projectile_creation_distance * scale
+                v.projectile_creation_distance = v.projectile_creation_distance * scale
             end
             recursive_hack_scale(v, scale)
         end
@@ -53,7 +50,9 @@ local recursive_hack_tint
 recursive_hack_tint = function(array, tint)
     for k, v in pairs(array) do
         if type(v) == "table" then
-            if is_sprite_def(v) then v.tint = tint end
+            if is_sprite_def(v) then
+                v.tint = tint
+            end
             recursive_hack_tint(v, tint)
         end
     end
@@ -98,7 +97,9 @@ util.scale_boxes = function(prototype, scale)
 end
 
 util.remove_flag = function(prototype, flag)
-    if not prototype.flags then return end
+    if not prototype.flags then
+        return
+    end
     for k, v in pairs(prototype.flags) do
         if v == flag then
             table.remove(prototype.flags, k)
@@ -108,14 +109,15 @@ util.remove_flag = function(prototype, flag)
 end
 
 util.add_flag = function(prototype, flag)
-    if not prototype.flags then return end
+    if not prototype.flags then
+        return
+    end
     table.insert(prototype.flags, flag)
 end
 
 util.base_player = function()
 
-    local player = util.table.deepcopy(data.raw.player.player or
-                                           error("Wat man cmon why"))
+    local player = util.table.deepcopy(data.raw.player.player or error("Wat man cmon why"))
     player.ticks_to_keep_gun = 600
     player.ticks_to_keep_aiming_direction = 100
     player.ticks_to_stay_in_combat = 600
@@ -123,19 +125,16 @@ util.base_player = function()
     return player
 end
 
-util.path = function(str) return "__Updated_Construction_Drones__/" .. str end
+util.path = function(str)
+    return "__Updated_Construction_Drones__/" .. str
+end
 
 util.empty_sound = function()
     return {filename = util.path("data/tf_util/empty-sound.ogg"), volume = 0}
 end
 
 util.empty_sprite = function()
-    return {
-        filename = util.path("data/tf_util/empty-sprite.png"),
-        height = 1,
-        width = 1,
-        frame_count = 1
-    }
+    return {filename = util.path("data/tf_util/empty-sprite.png"), height = 1, width = 1, frame_count = 1}
 end
 
 util.damage_type = function(name)
@@ -147,40 +146,31 @@ end
 
 util.ammo_category = function(name)
     if not data.raw["ammo-category"][name] then
-        data:extend{
-            {type = "ammo-category", name = name, localised_name = name}
-        }
+        data:extend{{type = "ammo-category", name = name, localised_name = name}}
     end
     return name
 end
 
 util.base_gun = function(name)
-    return {
-        name = name,
-        localised_name = name,
-        type = "gun",
-        stack_size = 1,
-        flags = {}
-    }
+    return {name = name, localised_name = name, type = "gun", stack_size = 1, flags = {}}
 end
 
 util.base_ammo = function(name)
-    return {
-        name = name,
-        localised_name = name,
-        type = "ammo",
-        stack_size = 1,
-        magazine_size = 1,
-        flags = {}
-    }
+    return {name = name, localised_name = name, type = "ammo", stack_size = 1, magazine_size = 1, flags = {}}
 end
 
 local base_speed = 0.25
-util.speed = function(multiplier) return multiplier * SD(base_speed) end
+util.speed = function(multiplier)
+    return multiplier * SD(base_speed)
+end
 
 util.remove_from_list = function(list, name)
     local remove = table.remove
-    for i = #list, 1, -1 do if list[i] == name then remove(list, i) end end
+    for i = #list, 1, -1 do
+        if list[i] == name then
+            remove(list, i)
+        end
+    end
 end
 
 local recursive_hack_something
@@ -198,7 +188,9 @@ local recursive_hack_blend_mode
 recursive_hack_blend_mode = function(prototype, value)
     for k, v in pairs(prototype) do
         if type(v) == "table" then
-            if util.is_sprite_def(v) then v.blend_mode = value end
+            if util.is_sprite_def(v) then
+                v.blend_mode = value
+            end
             recursive_hack_blend_mode(v, value)
         end
     end

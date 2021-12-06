@@ -10,7 +10,7 @@ beacon.energy_source = {
     type = "void",
     usage_priority = "secondary-input",
     input_flow_limit = "1J",
-    buffer_capacity = "1J"
+    buffer_capacity = "1J",
 }
 beacon.recharge_minimum = "0J"
 beacon.energy_usage = "0J"
@@ -37,9 +37,9 @@ beacon.base_animation = {
             frame_count = 8,
             shift = util.by_pixel(1, -16),
             animation_speed = 0.5,
-            scale = 0.5
-        }
-    }
+            scale = 0.5,
+        },
+    },
 }
 beacon.base = util.empty_sprite()
 beacon.base_patch = util.empty_sprite()
@@ -61,11 +61,9 @@ local recipe = {
     localised_name = name,
     category = data.raw.recipe["roboport"].category,
     enabled = false,
-    ingredients = {
-        {"iron-plate", 15}, {"iron-gear-wheel", 5}, {"electronic-circuit", 10}
-    },
+    ingredients = {{"iron-plate", 15}, {"iron-gear-wheel", 5}, {"electronic-circuit", 10}},
     energy_required = 1,
-    result = name
+    result = name,
 }
 
 data:extend{beacon, item, recipe}

@@ -1,6 +1,8 @@
 -- sigh... another mini mod to waste my time on
 local get_burners = function()
-    if burners then return burners end
+    if burners then
+        return burners
+    end
     -- deliberately not local
     burners = {}
     for name, entity in pairs(game.entity_prototypes) do
@@ -12,7 +14,9 @@ local get_burners = function()
 end
 
 local get_fuel = function()
-    if fuel then return fuel end
+    if fuel then
+        return fuel
+    end
     -- deliberately not local
     fuel = {}
     for name, item in pairs(game.item_prototypes) do
@@ -35,8 +39,7 @@ local get_category_items = function(categories)
 end
 
 local get_fuel_item = function(entity, burner)
-    local networks = entity.surface.find_logistic_networks_by_construction_area(
-                         entity.position, entity.force)
+    local networks = entity.surface.find_logistic_networks_by_construction_area(entity.position, entity.force)
 
     local category_items = get_category_items(burner.fuel_categories)
     local item
@@ -57,10 +60,14 @@ end
 local ghost_built = function(entity)
 
     local burner = get_burners()[entity.ghost_name]
-    if not burner then return end
+    if not burner then
+        return
+    end
 
     local item_name = get_fuel_item(entity, burner)
-    if not item_name then return end
+    if not item_name then
+        return
+    end
 
     local requests = entity.item_requests
     requests[item_name] = 5
@@ -69,22 +76,30 @@ end
 local ghost_type = "entity-ghost"
 local on_built_entity = function(event)
     local entity = event.created_entity
-    if not (entity and entity.valid) then return end
+    if not (entity and entity.valid) then
+        return
+    end
 
-    if entity.type == ghost_type then return ghost_built(entity) end
+    if entity.type == ghost_type then
+        return ghost_built(entity)
+    end
 
     local burner = get_burners()[entity.name]
-    if not burner then return end
+    if not burner then
+        return
+    end
 
     local item_name = get_fuel_item(entity, burner)
-    if not item_name then return end
+    if not item_name then
+        return
+    end
 
     entity.surface.create_entity {
         name = "item-request-proxy",
         position = entity.position,
         force = entity.force,
         target = entity,
-        modules = {[item_name] = 5}
+        modules = {[item_name] = 5},
     }
 
 end
@@ -93,5 +108,7 @@ local events = {[defines.events.on_built_entity] = on_built_entity}
 
 local lib = {}
 lib.on_event = handler(events)
-lib.get_events = function() return events end
+lib.get_events = function()
+    return events
+end
 return lib

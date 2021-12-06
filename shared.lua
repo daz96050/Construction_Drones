@@ -9,7 +9,7 @@ data.entities = {
     logistic_beacon = "Logistic Beacon",
     simple_storage_chest = "Simple Storage Chest",
     simple_provider_chest = "Simple Provider Chest",
-    construction_drone_proxy_chest = "Construction Drone Proxy Chest"
+    construction_drone_proxy_chest = "Construction Drone Proxy Chest",
 }
 
 data.equipment = {drone_port = "Personal Drone Port"}
@@ -19,7 +19,7 @@ data.beams = {
     deconstruction = "Deconstruct Beam",
     pickup = "Pickup Beam",
     dropoff = "Dropoff Beam",
-    attack = "Attack Beam"
+    attack = "Attack Beam",
 }
 
 return data

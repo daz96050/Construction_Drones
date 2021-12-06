@@ -2,7 +2,9 @@ local rename_recipe = function(old, new)
     local recipes = data.raw.recipe
     for k, recipe in pairs(recipes) do
         if recipe.normal then
-            for k, v in pairs(recipe.normal) do recipe[k] = v end
+            for k, v in pairs(recipe.normal) do
+                recipe[k] = v
+            end
             recipe.normal = nil
             recipe.expensive = nil
         end
@@ -21,7 +23,9 @@ local rename_recipe = function(old, new)
             if product.name and product.name == old then
                 product.name = new
             end
-            if product[1] and product[1] == old then product[1] = new end
+            if product[1] and product[1] == old then
+                product[1] = new
+            end
         end
         -- Will have to handle technologies.. so lets do it only when nescessary
         -- if recipe.name == old then
@@ -53,7 +57,9 @@ local rename_recipe = function(old, new)
     local recipes = data.raw.recipe
     for k, recipe in pairs(recipes) do
         if recipe.normal then
-            for k, v in pairs(recipe.normal) do recipe[k] = v end
+            for k, v in pairs(recipe.normal) do
+                recipe[k] = v
+            end
             recipe.normal = nil
             recipe.expensive = nil
         end
@@ -72,7 +78,9 @@ local rename_recipe = function(old, new)
             if product.name and product.name == old then
                 product.name = new
             end
-            if product[1] and product[1] == old then product[1] = new end
+            if product[1] and product[1] == old then
+                product[1] = new
+            end
         end
         -- Will have to handle technologies.. so lets do it only when nescessary
         -- if recipe.name == old then
@@ -88,13 +96,17 @@ local remove_from_recipe = function(recipe, name)
     -- log(name)
     if recipe.normal then
         -- Screw this half-assed system
-        for k, v in pairs(recipe.normal) do recipe[k] = v end
+        for k, v in pairs(recipe.normal) do
+            recipe[k] = v
+        end
         recipe.normal = nil
         recipe.expensive = nil
     end
 
     local result = recipe.result
-    if result == name then return end
+    if result == name then
+        return
+    end
     local ingredients = recipe.ingredients
     if ingredients then
         for i = #ingredients, 1, -1 do
@@ -102,7 +114,9 @@ local remove_from_recipe = function(recipe, name)
                 table.remove(ingredients, i)
             end
         end
-        if #ingredients == 0 then return end
+        if #ingredients == 0 then
+            return
+        end
     end
 
     local products = recipe.products
@@ -112,7 +126,9 @@ local remove_from_recipe = function(recipe, name)
                 table.remove(products, i)
             end
         end
-        if #products == 0 then return end
+        if #products == 0 then
+            return
+        end
     end
 
     if recipe.main_product and recipe.main_product == name then
@@ -128,9 +144,13 @@ local remove_technology = function(name)
         local req = tech.prerequisites
         if req then
             for i = #req, 1, -1 do
-                if req[i] == name then table.remove(req, i) end
+                if req[i] == name then
+                    table.remove(req, i)
+                end
             end
-            if #req == 0 then tech.prerequisites = nil end
+            if #req == 0 then
+                tech.prerequisites = nil
+            end
         end
     end
     technologies[name] = nil
@@ -145,7 +165,9 @@ local remove_item_from_technologies = function(name)
                 table.remove(packs, i)
             end
         end
-        if #packs == 0 then remove_technology(tech.name) end
+        if #packs == 0 then
+            remove_technology(tech.name)
+        end
     end
 end
 
@@ -163,13 +185,17 @@ local remove_recipe_from_technologies = function(name)
                     table.remove(effects, i)
                 end
             end
-            if #effects == 0 then remove_technology(technology.name) end
+            if #effects == 0 then
+                remove_technology(technology.name)
+            end
         end
     end
 end
 
 local remove_item_from_recipes = function(name)
-    if type(name) ~= "string" then error("I EXPECT A STRING") end
+    if type(name) ~= "string" then
+        error("I EXPECT A STRING")
+    end
     -- log("Removing item from recipes: "..name)
     local recipes = data.raw.recipe
     for k, recipe in pairs(recipes) do
@@ -182,7 +208,9 @@ local remove_item_from_recipes = function(name)
 end
 
 local remove_from_items = function(name)
-    if type(name) ~= "string" then error("I EXPECT A STRING") end
+    if type(name) ~= "string" then
+        error("I EXPECT A STRING")
+    end
     local items = data.raw.item
     for k, item in pairs(items) do
         if item.place_result == name then
@@ -237,7 +265,9 @@ local remove_from_achievements = function(name)
 end
 
 local remove_entity_prototype = function(ent)
-    if not ent then return end
+    if not ent then
+        return
+    end
     -- So, if we actually delete the prototype, we get some error about traversing old prototypes for migrations or some BS... so we just nuke all items and hide them
     -- log(ent.name)
     remove_from_items(ent.name)
@@ -278,7 +308,9 @@ remove_technology_effect_type = function(dict)
                     table.remove(effects, i)
                 end
             end
-            if #effects == 0 then remove_technology(tech.name) end
+            if #effects == 0 then
+                remove_technology(tech.name)
+            end
         end
     end
 end

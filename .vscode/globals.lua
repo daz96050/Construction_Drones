@@ -14,6 +14,9 @@ serpent = nil
 settings = nil
 
 -- function
-localised_print = function(str) end
-log = function(str) end
-table_size = function(obj) end
+localised_print = function(str)
+end
+log = function(str)
+end
+table_size = function(obj)
+end
