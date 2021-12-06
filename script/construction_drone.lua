@@ -1387,14 +1387,6 @@ local process_construct_command = function(drone_data)
     local force = target.force
     local surface = target.surface
 
-    local tile_products
-    if target.type == "tile-ghost" then
-        local tile = target.surface.get_tile(target.position)
-        if tile then
-            tile_products = tile.prototype.mineable_properties.products
-        end
-    end
-
     local index = unique_index(target)
     local colliding_items, entity, proxy = target.revive(revive_param)
     if not colliding_items then
@@ -1429,12 +1421,6 @@ local process_construct_command = function(drone_data)
         name = drone_data.item_used_to_place,
         count = drone_data.item_used_to_place_count
     }
-
-    if tile_products then
-        for k, product in pairs(tile_products) do
-            drone_inventory.insert(stack_from_product(product))
-        end
-    end
 
     update_drone_sticker(drone_data)
 
