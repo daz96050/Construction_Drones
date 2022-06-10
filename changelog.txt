@@ -1,8 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.5
+Date: -
+  Bugfixes:
+    - Do not set up collision on tiles that are not loaded
+    - Fix changing belt direction (#2)
+---------------------------------------------------------------------------------------------------
 Version: 1.0.4
 Date: 2021-12-06T13:55:42+01:00
   Bugfixes:
-    - Ghost building paths over any other path no longer causes a duplication of the removed path.
+    - Ghost building paths over any other path no longer causes a duplication of the removed path
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.3
 Date: 2021-12-06T12:26:50+01:00

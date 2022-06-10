@@ -15,7 +15,9 @@ end
 -- Add collision to all water tiles
 local tiles = {"deepwater", "deepwater-green", "water", "water-green", "water-mud", "water-shallow", "water-wube"}
 for _, tile in pairs(tiles) do
-    collision_mask_util.add_layer(data.raw["tile"][tile].collision_mask, drone_collision_mask)
+    if data.raw["tile"][tile] then
+        collision_mask_util.add_layer(data.raw["tile"][tile].collision_mask, drone_collision_mask)
+    end
     -- print("proto " .. data.raw["tile"][tile].name)
     -- print("proto " .. serpent.block(data.raw["tile"][tile].collision_mask))
 end
