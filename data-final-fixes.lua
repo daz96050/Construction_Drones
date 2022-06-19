@@ -17,9 +17,9 @@ local tiles = { "deepwater", "deepwater-green", "water", "water-green", "water-m
 for _, tile in pairs(tiles) do
     if data.raw["tile"][tile] then
         collision_mask_util.add_layer(data.raw["tile"][tile].collision_mask, drone_collision_mask)
+        -- print("proto " .. data.raw["tile"][tile].name)
+        -- print("proto " .. serpent.block(data.raw["tile"][tile].collision_mask))
     end
-    -- print("proto " .. data.raw["tile"][tile].name)
-    -- print("proto " .. serpent.block(data.raw["tile"][tile].collision_mask))
 end
 
 local name = names.units.construction_drone
