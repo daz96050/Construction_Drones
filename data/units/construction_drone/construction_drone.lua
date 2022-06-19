@@ -37,17 +37,17 @@ local unit = {
     localised_name = name,
     icon = path .. "construction_drone_icon.png",
     icon_size = 64,
-    flags = {"placeable-player", "placeable-enemy", "placeable-off-grid"},
-    map_color = {r = 0, g = 1, b = 1, a = 1},
+    flags = { "placeable-player", "placeable-enemy", "placeable-off-grid" },
+    map_color = { r = 0, g = 1, b = 1, a = 1 },
     max_health = 45,
     order = "b-b-a",
     subgroup = "logistic-network",
     has_belt_immunity = true,
     can_open_gates = true,
     affected_by_tiles = true,
-    collision_box = {{-0.01, -0.01}, {0.01, 0.01}},
+    collision_box = { { -0.01, -0.01 }, { 0.01, 0.01 } },
     -- collision_box = {{-0.2, -0.2}, {0.2, 0.2}},
-    selection_box = {{-0.6 * scale, -1.0 * scale}, {0.6 * scale, 0.4 * scale}},
+    selection_box = { { -0.6 * scale, -1.0 * scale }, { 0.6 * scale, 0.4 * scale } },
     collision_mask = util.ground_unit_collision_mask(), -- will be replaced in data-final-fixes.lua
     attack_parameters = {
         type = "beam",
@@ -61,7 +61,7 @@ local unit = {
             target_type = "entity",
             action = {
                 type = "direct",
-                action_delivery = {type = "beam", beam = names.beams.attack, max_length = 40, duration = 45},
+                action_delivery = { type = "beam", beam = names.beams.attack, max_length = 40, duration = 45 },
             },
         },
         sound = nil,
@@ -80,25 +80,25 @@ local unit = {
     -- dying_sound =  make_biter_dying_sounds(0.4),
     working_sound = {
         sound = {
-            {filename = path .. "construction_drone_1.ogg"},
-            {filename = path .. "construction_drone_2.ogg"},
-            {filename = path .. "construction_drone_3.ogg"},
-            {filename = path .. "construction_drone_4.ogg"},
-            {filename = path .. "construction_drone_5.ogg"},
-            {filename = path .. "construction_drone_6.ogg"},
-            {filename = path .. "construction_drone_7.ogg"},
-            {filename = path .. "construction_drone_8.ogg"},
-            {filename = path .. "construction_drone_9.ogg"},
-            {filename = path .. "construction_drone_10.ogg"},
-            {filename = path .. "construction_drone_11.ogg"},
-            {filename = path .. "construction_drone_12.ogg"},
-            {filename = path .. "construction_drone_13.ogg"},
+            { filename = path .. "construction_drone_1.ogg" },
+            { filename = path .. "construction_drone_2.ogg" },
+            { filename = path .. "construction_drone_3.ogg" },
+            { filename = path .. "construction_drone_4.ogg" },
+            { filename = path .. "construction_drone_5.ogg" },
+            { filename = path .. "construction_drone_6.ogg" },
+            { filename = path .. "construction_drone_7.ogg" },
+            { filename = path .. "construction_drone_8.ogg" },
+            { filename = path .. "construction_drone_9.ogg" },
+            { filename = path .. "construction_drone_10.ogg" },
+            { filename = path .. "construction_drone_11.ogg" },
+            { filename = path .. "construction_drone_12.ogg" },
+            { filename = path .. "construction_drone_13.ogg" },
         },
         probability = 1 / (8 * 60),
         volume = 0.5,
     },
     run_animation = animation,
-    minable = {result = name, mining_time = 1},
+    minable = { result = name, mining_time = 1 },
     ai_settings = {
         destroy_when_commands_fail = false,
         allow_try_return_to_spawner = false,
@@ -106,25 +106,25 @@ local unit = {
         path_resolution_modifier = 0,
     },
     light = {
-        {minimum_darkness = 0.3, intensity = 0.4, size = 10, color = {r = 1.0, g = 1.0, b = 1.0}},
+        { minimum_darkness = 0.3, intensity = 0.4, size = 10, color = { r = 1.0, g = 1.0, b = 1.0 } },
         {
             type = "oriented",
             minimum_darkness = 0.3,
             picture = {
                 filename = "__core__/graphics/light-cone.png",
                 priority = "extra-high",
-                flags = {"light"},
+                flags = { "light" },
                 scale = 2,
                 width = 200,
                 height = 200,
             },
-            shift = {0, -3.5},
+            shift = { 0, -3.5 },
             size = 0.5,
             intensity = 0.6,
-            color = {r = 1.0, g = 1.0, b = 1.0},
+            color = { r = 1.0, g = 1.0, b = 1.0 },
         },
     },
-    resistances = {{type = "acid", percent = 95}},
+    resistances = { { type = "acid", percent = 95 } },
 }
 
 local item = {
@@ -146,7 +146,7 @@ local recipe = {
     localised_name = name,
     category = data.raw.recipe["construction-robot"].category,
     enabled = true,
-    ingredients = {{"iron-plate", 5}, {"iron-gear-wheel", 5}, {"electronic-circuit", 10}},
+    ingredients = { { "iron-plate", 5 }, { "iron-gear-wheel", 5 }, { "electronic-circuit", 10 } },
     energy_required = 1,
     result = name,
 }
@@ -163,7 +163,7 @@ proxy_chest.next_upgrade = nil
 local beam_blend_mode = "additive"
 local beam_base = {
     type = "beam",
-    flags = {"not-on-map"},
+    flags = { "not-on-map" },
     damage_interval = 1000,
     width = 0.5,
     random_target_offset = true,
@@ -243,25 +243,25 @@ beam_base.damage_interval = 10000
 local beams = names.beams
 
 local build_beam = util.copy(beam_base)
-util.recursive_hack_tint(build_beam, {g = 1})
+util.recursive_hack_tint(build_beam, { g = 1 })
 build_beam.name = beams.build
 build_beam.localised_name = beams.build
 build_beam.action = nil
 
 local deconstruct_beam = util.copy(beam_base)
-util.recursive_hack_tint(deconstruct_beam, {r = 1})
+util.recursive_hack_tint(deconstruct_beam, { r = 1 })
 deconstruct_beam.name = beams.deconstruction
 deconstruct_beam.localised_name = beams.deconstruction
 deconstruct_beam.action = nil
 
 local pickup_beam = util.copy(beam_base)
-util.recursive_hack_tint(pickup_beam, {g = 1, b = 1})
+util.recursive_hack_tint(pickup_beam, { g = 1, b = 1 })
 pickup_beam.name = beams.pickup
 pickup_beam.localised_name = beams.pickup
 pickup_beam.action = nil
 
 local attack_beam = util.copy(beam_base)
-util.recursive_hack_tint(attack_beam, {r = 1, b = 1})
+util.recursive_hack_tint(attack_beam, { r = 1, b = 1 })
 attack_beam.name = beams.attack
 attack_beam.localised_name = beams.attack
 attack_beam.damage_interval = 20
@@ -269,8 +269,8 @@ attack_beam.action = {
     type = "direct",
     action_delivery = {
         type = "instant",
-        target_effects = {{type = "damage", damage = {amount = 5, type = util.damage_type(name)}}},
+        target_effects = { { type = "damage", damage = { amount = 5, type = util.damage_type(name) } } },
     },
 }
 
-data:extend{unit, item, recipe, proxy_chest, build_beam, deconstruct_beam, pickup_beam, attack_beam}
+data:extend { unit, item, recipe, proxy_chest, build_beam, deconstruct_beam, pickup_beam, attack_beam }

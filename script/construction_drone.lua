@@ -12,14 +12,14 @@ remote.add_interface("construction_drone", {
     set_debug = function(bool)
         data.debug = bool
     end
-,
+    ,
     dump = function()
         -- print(serpent.block(data))
     end
-,
+    ,
 })
 
-drone_prototypes = {[names.units.construction_drone] = {interact_range = 5, return_to_character_range = -1}}
+drone_prototypes = { [names.units.construction_drone] = { interact_range = 5, return_to_character_range = -1 } }
 
 local unique_index = function(entity)
     if entity.unit_number then
@@ -43,10 +43,10 @@ local sin, cos = math.sin, math.cos
 local angle = util.angle
 local oofah = (2 ^ 0.5) / 2
 local radius_map
-local ranges = {interact = 1, return_to_character = 3}
+local ranges = { interact = 1, return_to_character = 3 }
 local floor = math.floor
 local random = math.random
-local proxy_position = {1000000, 1000000}
+local proxy_position = { 1000000, 1000000 }
 
 local belt_connectible_type = {
     ["transport-belt"] = 2,
@@ -119,7 +119,7 @@ local get_beam_orientation = function(source_position, target_position)
     local x1 = (x * cos(angle)) - (y * sin(angle))
     local y1 = (x * sin(angle)) + (y * cos(angle))
 
-    return orientation, {x1, y1 - 0.5}
+    return orientation, { x1, y1 - 0.5 }
 
 end
 
@@ -198,7 +198,7 @@ local stack_from_product = function(product)
     if count < 1 then
         return
     end
-    local stack = {name = product.name, count = count}
+    local stack = { name = product.name, count = count }
     -- print(serpent.line(stack))
     return stack
 end
@@ -210,7 +210,7 @@ local get_proxy_chest = function(drone)
     if proxy_chest and proxy_chest.valid then
         return proxy_chest
     end
-    local new = drone.surface.create_entity {name = proxy_name, position = proxy_position, force = drone.force}
+    local new = drone.surface.create_entity { name = proxy_name, position = proxy_position, force = drone.force }
     data.proxy_chests[index] = new
     return new
 end
@@ -304,7 +304,7 @@ local transfer_inventory = function(source, destination)
     for k = 1, #source do
         local stack = source[k]
         if stack and stack.valid and stack.valid_for_read and can_insert(stack) then
-            local remove_stack = {name = stack.name, count = insert(stack)}
+            local remove_stack = { name = stack.name, count = insert(stack) }
             if remove_stack.count > 0 then
                 remove(remove_stack)
             end
@@ -428,13 +428,18 @@ end
 
 
 local make_player_drone = function(player)
-    local position = player.surface.find_non_colliding_position(names.units.construction_drone, player.position, 5, 0.5,
-                                                                false)
+    local position = player.surface.find_non_colliding_position(
+        names.units.construction_drone,
+        player.position,
+        5,
+        0.5,
+        false
+    )
     if not position then
         return
     end
 
-    local removed = player.remove_item({name = names.units.construction_drone, count = 1})
+    local removed = player.remove_item({ name = names.units.construction_drone, count = 1 })
     if removed == 0 then
         return
     end
@@ -548,9 +553,9 @@ local check_ghost = function(entity, player)
     local extra_targets = {}
     local extra
     if entity.name == "tile-ghost" then
-        extra = surface.find_entities_filtered {type = tile_ghost_type, position = position, radius = 3}
+        extra = surface.find_entities_filtered { type = tile_ghost_type, position = position, radius = 3 }
     else
-        extra = surface.find_entities_filtered {ghost_name = entity.ghost_name, position = position, radius = 5}
+        extra = surface.find_entities_filtered { ghost_name = entity.ghost_name, position = position, radius = 5 }
     end
     for k, ghost in pairs(extra) do
         if count >= 8 then
@@ -576,7 +581,7 @@ local check_ghost = function(entity, player)
     local drone_data = {
         player = player,
         order = drone_orders.construct,
-        pickup = {stack = item},
+        pickup = { stack = item },
         target = target,
         entity_ghost_name = entity.ghost_name,
         item_used_to_place = item.name,
@@ -642,7 +647,7 @@ local check_upgrade = function(entity, player)
     local drone_data = {
         player = player,
         order = drone_orders.upgrade,
-        pickup = {stack = {name = item.name, count = count}},
+        pickup = { stack = { name = item.name, count = count } },
         target = target,
         extra_targets = extra_targets,
         upgrade_prototype = upgrade_prototype,
@@ -675,7 +680,7 @@ local check_proxy = function(entity, player)
             local drone_data = {
                 player = player,
                 order = drone_orders.request_proxy,
-                pickup = {stack = {name = name, count = count}},
+                pickup = { stack = { name = name, count = count } },
                 target = entity,
             }
             make_path_request(drone_data, player, entity)
@@ -700,7 +705,7 @@ local check_cliff_deconstruction = function(entity, player)
         player = player,
         order = drone_orders.cliff_deconstruct,
         target = entity,
-        pickup = {stack = {name = cliff_destroying_item, count = 1}},
+        pickup = { stack = { name = cliff_destroying_item, count = 1 } },
     }
     make_path_request(drone_data, player, entity)
 
@@ -794,7 +799,7 @@ local check_deconstruction = function(entity, player)
         if not (entity and entity.valid) then
             break
         end
-        local drone_data = {player = player, order = drone_orders.deconstruct, target = entity}
+        local drone_data = { player = player, order = drone_orders.deconstruct, target = entity }
         make_path_request(drone_data, player, entity)
         sent = sent + 1
     end
@@ -864,7 +869,7 @@ local check_repair = function(entity, player)
     local drone_data = {
         player = player,
         order = drone_orders.repair,
-        pickup = {stack = {name = repair_item.name, count = 1}},
+        pickup = { stack = { name = repair_item.name, count = 1 } },
         target = entity,
     }
 
@@ -946,7 +951,7 @@ local scan_for_nearby_jobs = function(player, area)
 
     local already_targeted = data.already_targeted
 
-    local entities = player.surface.find_entities_filtered {area = area, type = ignored_types, invert = true}
+    local entities = player.surface.find_entities_filtered { area = area, type = ignored_types, invert = true }
 
     local unique_index = unique_index
     local check_entity = function(entity)
@@ -957,27 +962,27 @@ local scan_for_nearby_jobs = function(player, area)
         local name = entity.name
         -- entity.surface.create_entity{name = "flying-text", position = entity.position, text = "!"}
         if name == "entity-ghost" or name == "tile-ghost" then
-            player_queue[index] = {type = drone_orders.construct, entity = entity}
+            player_queue[index] = { type = drone_orders.construct, entity = entity }
             return true
         end
 
         if name == "item-request-proxy" then
-            player_queue[index] = {type = drone_orders.request_proxy, entity = entity}
+            player_queue[index] = { type = drone_orders.request_proxy, entity = entity }
             return true
         end
 
         if entity.to_be_deconstructed() then
-            player_queue[index] = {type = drone_orders.deconstruct, entity = entity}
+            player_queue[index] = { type = drone_orders.deconstruct, entity = entity }
             return true
         end
 
         if (entity.get_health_ratio() or 1) < 1 then
-            player_queue[index] = {type = drone_orders.repair, entity = entity}
+            player_queue[index] = { type = drone_orders.repair, entity = entity }
             return true
         end
 
         if entity.to_be_upgraded() then
-            player_queue[index] = {type = drone_orders.upgrade, entity = entity}
+            player_queue[index] = { type = drone_orders.upgrade, entity = entity }
             return true
         end
 
@@ -1002,8 +1007,10 @@ local check_player_jobs = function(player)
         return
     end
 
-    local count = math.min(5, player.get_item_count(names.units.construction_drone) -
-                               (data.request_count[player.index] or 0))
+    local count = math.min(
+        5,
+        player.get_item_count(names.units.construction_drone) - (data.request_count[player.index] or 0)
+    )
 
     for _ = 1, count do
         local index, job = next(queue)
@@ -1028,15 +1035,15 @@ local setup_search_offsets = function(div)
 
     for y = -div, div - 1 do
         for x = -div, div - 1 do
-            local area = {{x * r, y * r}, {(x + 1) * r, (y + 1) * r}}
+            local area = { { x * r, y * r }, { (x + 1) * r, (y + 1) * r } }
             table.insert(search_offsets, area)
         end
     end
 
     table.sort(search_offsets, function(a, b)
-        return distance(a[1], {0, 0}) < distance(b[1], {0, 0})
+        return distance(a[1], { 0, 0 }) < distance(b[1], { 0, 0 })
     end
-)
+    )
     search_refresh = #search_offsets
 end
 
@@ -1059,8 +1066,8 @@ local check_search_queue = function()
     end
     local position = player.position
     local search_area = {
-        {area[1][1] + position.x, area[1][2] + position.y},
-        {area[2][1] + position.x, area[2][2] + position.y},
+        { area[1][1] + position.x, area[1][2] + position.y },
+        { area[2][1] + position.x, area[2][2] + position.y },
     }
     scan_for_nearby_jobs(player, search_area)
 end
@@ -1078,7 +1085,7 @@ local schedule_new_searches = function()
         local index = player.index
         if can_player_spawn_drones(player) and not next(data.job_queue[index] or {}) then
             for i, _ in pairs(search_offsets) do
-                insert(queue, {player_index = index, area_index = i})
+                insert(queue, { player_index = index, area_index = i })
             end
         end
     end
@@ -1171,7 +1178,7 @@ local cancel_drone_order = function(drone_data, on_removed)
     if stack then
         if not on_removed then
             -- print("Holding a stack, gotta go drop it off... "..unit_number)
-            drone_data.dropoff = {stack = stack}
+            drone_data.dropoff = { stack = stack }
             return process_drone_command(drone_data)
         end
     end
@@ -1233,7 +1240,7 @@ end
 
 local insert = table.insert
 
-local offsets = {{0, 0}, {0.25, 0}, {0, 0.25}, {0.25, 0.25}}
+local offsets = { { 0, 0 }, { 0.25, 0 }, { 0, 0.25 }, { 0.25, 0.25 } }
 
 update_drone_sticker = function(drone_data)
     local sticker = drone_data.sticker
@@ -1262,7 +1269,7 @@ update_drone_sticker = function(drone_data)
 
     local drone = drone_data.entity
     local surface = drone.surface
-    local forces = {drone.force}
+    local forces = { drone.force }
 
     local renderings = {}
     drone_data.renderings = renderings
@@ -1273,7 +1280,7 @@ update_drone_sticker = function(drone_data)
         surface = surface,
         forces = forces,
         only_in_alt_mode = true,
-        target_offset = {0, -0.5},
+        target_offset = { 0, -0.5 },
         x_scale = 0.5,
         y_scale = 0.5,
     })
@@ -1285,7 +1292,7 @@ update_drone_sticker = function(drone_data)
             surface = surface,
             forces = forces,
             only_in_alt_mode = true,
-            target_offset = {0, -0.5},
+            target_offset = { 0, -0.5 },
             x_scale = 0.5,
             y_scale = 0.5,
         })
@@ -1302,7 +1309,7 @@ update_drone_sticker = function(drone_data)
             surface = surface,
             forces = forces,
             only_in_alt_mode = true,
-            target_offset = {-0.125 + offset[1], -0.5 + offset[2]},
+            target_offset = { -0.125 + offset[1], -0.5 + offset[2] },
             x_scale = 0.25,
             y_scale = 0.25,
         })
@@ -1383,7 +1390,7 @@ end
 
 local unit_clear_target = function(unit, target)
     local r = get_radius(unit) + get_radius(target) + 1
-    local position = {x = true, y = true}
+    local position = { x = true, y = true }
     if unit.position.x > target.position.x then
         position.x = unit.position.x + r
     else
@@ -1396,7 +1403,7 @@ local unit_clear_target = function(unit, target)
     end
     unit.speed = unit.prototype.speed
     local non_colliding_position = unit.surface.find_non_colliding_position(unit.name, position, 0, 0.5)
-    unit.set_command {type = defines.command.go_to_location, destination = position, radius = 1}
+    unit.set_command { type = defines.command.go_to_location, destination = position, radius = 1 }
 
 end
 
@@ -1422,7 +1429,7 @@ local get_extra_target = function(drone_data)
 end
 
 
-local revive_param = {return_item_request_proxy = true, raise_revive = true}
+local revive_param = { return_item_request_proxy = true, raise_revive = true }
 local process_construct_command = function(drone_data)
     -- print("Processing construct command")
     local target = drone_data.target
@@ -1469,14 +1476,14 @@ local process_construct_command = function(drone_data)
     data.already_targeted[index] = nil
 
     for name, count in pairs(colliding_items) do
-        local inserted = drone_inventory.insert {name = name, count = count}
+        local inserted = drone_inventory.insert { name = name, count = count }
 
         if inserted < count then
-            surface.spill_item_stack(position, {name = name, count = count - inserted}, false, force)
+            surface.spill_item_stack(position, { name = name, count = count - inserted }, false, force)
         end
     end
 
-    drone_inventory.remove {name = drone_data.item_used_to_place, count = drone_data.item_used_to_place_count}
+    drone_inventory.remove { name = drone_data.item_used_to_place, count = drone_data.item_used_to_place_count }
 
     update_drone_sticker(drone_data)
 
@@ -1560,10 +1567,10 @@ local process_deconstruct_command = function(drone_data)
 
     local tiles
     if target.type == tile_deconstruction_proxy then
-        tiles = {{name = target.surface.get_hidden_tile(target.position) or "grass-1", position = target.position}}
+        tiles = { { name = target.surface.get_hidden_tile(target.position) or "grass-1", position = target.position } }
     end
 
-    local mined = target.mine {inventory = drone_inventory, force = false, raise_destroyed = true}
+    local mined = target.mine { inventory = drone_inventory, force = false, raise_destroyed = true }
     data.already_targeted[index] = nil
 
     if mined then
@@ -1691,7 +1698,7 @@ local process_upgrade_command = function(drone_data)
     local index = unique_index(target)
     local neighbour = entity_type == "underground-belt" and target.neighbours
     local type = entity_type == "underground-belt" and target.belt_to_ground_type or
-                     (entity_type == "loader" or entity_type == "loader-1x1") and target.loader_type
+        (entity_type == "loader" or entity_type == "loader-1x1") and target.loader_type
     local position = target.position
 
     surface.create_entity {
@@ -1707,7 +1714,7 @@ local process_upgrade_command = function(drone_data)
 
     data.already_targeted[index] = nil
 
-    drone_inventory.remove({name = drone_data.item_used_to_place})
+    drone_inventory.remove({ name = drone_data.item_used_to_place })
 
     local drone_inventory = get_drone_inventory(drone_data)
     local products = get_prototype(original_name).mineable_properties.products
@@ -1730,7 +1737,7 @@ local process_upgrade_command = function(drone_data)
         }
         data.already_targeted[neighbour_index] = nil
         take_product_stacks(drone_inventory, products)
-        drone_inventory.remove({name = drone_data.item_used_to_place})
+        drone_inventory.remove({ name = drone_data.item_used_to_place })
     end
 
     local target = get_extra_target(drone_data)
@@ -1814,7 +1821,7 @@ local process_request_proxy_command = function(drone_data)
         target.destroy()
         return cancel_drone_order(drone_data)
     end
-    drone_inventory.remove({name = stack_name, count = inserted})
+    drone_inventory.remove({ name = stack_name, count = inserted })
     requests[stack_name] = requests[stack_name] - inserted
     if requests[stack_name] <= 0 then
         requests[stack_name] = nil
@@ -1880,9 +1887,9 @@ local process_deconstruct_cliff_command = function(drone_data)
         drone_data.beam = nil
     end
     local index = unique_index(target)
-    get_drone_inventory(drone_data).remove {name = target.prototype.cliff_explosive_prototype, count = 1}
-    target.surface.create_entity {name = "ground-explosion", position = util.center(target.bounding_box)}
-    target.destroy({do_cliff_correction = true})
+    get_drone_inventory(drone_data).remove { name = target.prototype.cliff_explosive_prototype, count = 1 }
+    target.surface.create_entity { name = "ground-explosion", position = util.center(target.bounding_box) }
+    target.destroy({ do_cliff_correction = true })
     data.already_targeted[index] = nil
     -- print("Cliff destroyed, heading home bois. ")
     update_drone_sticker(drone_data)
@@ -1892,14 +1899,14 @@ end
 
 
 local directions = {
-    [defines.direction.north] = {0, -1},
-    [defines.direction.northeast] = {1, -1},
-    [defines.direction.east] = {1, 0},
-    [defines.direction.southeast] = {1, 1},
-    [defines.direction.south] = {0, 1},
-    [defines.direction.southwest] = {-1, 1},
-    [defines.direction.west] = {-1, 0},
-    [defines.direction.northwest] = {-1, -1},
+    [defines.direction.north] = { 0, -1 },
+    [defines.direction.northeast] = { 1, -1 },
+    [defines.direction.east] = { 1, 0 },
+    [defines.direction.southeast] = { 1, 1 },
+    [defines.direction.south] = { 0, 1 },
+    [defines.direction.southwest] = { -1, 1 },
+    [defines.direction.west] = { -1, 0 },
+    [defines.direction.northwest] = { -1, -1 },
 }
 
 process_return_to_player_command = function(drone_data, force)
@@ -1923,7 +1930,7 @@ process_return_to_player_command = function(drone_data, force)
         return
     end
 
-    if player.insert({name = names.units.construction_drone, count = 1}) == 0 then
+    if player.insert({ name = names.units.construction_drone, count = 1 }) == 0 then
         drone_wait(drone_data, random(18, 24))
         return
     end
@@ -2050,7 +2057,7 @@ local on_entity_removed = function(event)
             local inventory = proxy_chest.get_inventory(defines.inventory.chest)
             if inventory and inventory.valid then
                 for name, count in pairs(inventory.get_contents()) do
-                    buffer.insert {name = name, count = count}
+                    buffer.insert { name = name, count = count }
                 end
             end
         end

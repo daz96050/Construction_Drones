@@ -1,9 +1,9 @@
 -- Shared data interface between data and script, notably prototype names.
 local data = {}
 
-data.units = {construction_drone = "Construction Drone"}
+data.units = { construction_drone = "Construction Drone" }
 
-data.technologies = {construction_drone_system = "Construction Drone System"}
+data.technologies = { construction_drone_system = "Construction Drone System" }
 
 data.entities = {
     logistic_beacon = "Logistic Beacon",
@@ -12,7 +12,7 @@ data.entities = {
     construction_drone_proxy_chest = "Construction Drone Proxy Chest",
 }
 
-data.equipment = {drone_port = "Personal Drone Port"}
+data.equipment = { drone_port = "Personal Drone Port" }
 
 data.beams = {
     build = "Build beam",

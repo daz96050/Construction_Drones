@@ -5,7 +5,7 @@ local icon = {
     priority = "extra-high-no-scale",
     size = 64,
     scale = 1,
-    flags = {"icon"},
+    flags = { "icon" },
 }
 
 data:extend({

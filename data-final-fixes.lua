@@ -13,7 +13,7 @@ for _, prototype in pairs(collision_mask_util.collect_prototypes_with_layer("pla
 end
 
 -- Add collision to all water tiles
-local tiles = {"deepwater", "deepwater-green", "water", "water-green", "water-mud", "water-shallow", "water-wube"}
+local tiles = { "deepwater", "deepwater-green", "water", "water-green", "water-mud", "water-shallow", "water-wube" }
 for _, tile in pairs(tiles) do
     if data.raw["tile"][tile] then
         collision_mask_util.add_layer(data.raw["tile"][tile].collision_mask, drone_collision_mask)
@@ -23,4 +23,4 @@ for _, tile in pairs(tiles) do
 end
 
 local name = names.units.construction_drone
-data.raw.unit[name].collision_mask = {"not-colliding-with-itself", drone_collision_mask, "consider-tile-transitions"}
+data.raw.unit[name].collision_mask = { "not-colliding-with-itself", drone_collision_mask, "consider-tile-transitions" }

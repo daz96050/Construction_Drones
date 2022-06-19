@@ -49,7 +49,7 @@ local util = require("util")
 -- end
 
 util.center = function(area)
-    return {x = (area.left_top.x + area.right_bottom.x) / 2, y = (area.left_top.y + area.right_bottom.y) / 2}
+    return { x = (area.left_top.x + area.right_bottom.x) / 2, y = (area.left_top.y + area.right_bottom.y) / 2 }
 end
 
 

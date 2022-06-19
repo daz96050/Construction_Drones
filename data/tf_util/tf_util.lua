@@ -93,7 +93,7 @@ end
 
 
 util.scale_boxes = function(prototype, scale)
-    for k, v in pairs {"collision_box", "selection_box"} do
+    for k, v in pairs { "collision_box", "selection_box" } do
         local box = prototype[v]
         if box then
             local width = (box[2][1] - box[1][1]) * (scale / 2)
@@ -145,18 +145,18 @@ end
 
 
 util.empty_sound = function()
-    return {filename = util.path("data/tf_util/empty-sound.ogg"), volume = 0}
+    return { filename = util.path("data/tf_util/empty-sound.ogg"), volume = 0 }
 end
 
 
 util.empty_sprite = function()
-    return {filename = util.path("data/tf_util/empty-sprite.png"), height = 1, width = 1, frame_count = 1}
+    return { filename = util.path("data/tf_util/empty-sprite.png"), height = 1, width = 1, frame_count = 1 }
 end
 
 
 util.damage_type = function(name)
     if not data.raw["damage-type"][name] then
-        data:extend{{type = "damage-type", name = name, localised_name = name}}
+        data:extend { { type = "damage-type", name = name, localised_name = name } }
     end
     return name
 end
@@ -164,19 +164,19 @@ end
 
 util.ammo_category = function(name)
     if not data.raw["ammo-category"][name] then
-        data:extend{{type = "ammo-category", name = name, localised_name = name}}
+        data:extend { { type = "ammo-category", name = name, localised_name = name } }
     end
     return name
 end
 
 
 util.base_gun = function(name)
-    return {name = name, localised_name = name, type = "gun", stack_size = 1, flags = {}}
+    return { name = name, localised_name = name, type = "gun", stack_size = 1, flags = {} }
 end
 
 
 util.base_ammo = function(name)
-    return {name = name, localised_name = name, type = "ammo", stack_size = 1, magazine_size = 1, flags = {}}
+    return { name = name, localised_name = name, type = "ammo", stack_size = 1, magazine_size = 1, flags = {} }
 end
 
 
@@ -225,17 +225,17 @@ end
 util.copy = util.table.deepcopy
 
 util.flying_unit_collision_mask = function()
-    return {"not-colliding-with-itself", "layer-15"}
+    return { "not-colliding-with-itself", "layer-15" }
 end
 
 
 util.ground_unit_collision_mask = function()
-    return {"not-colliding-with-itself", "doodad-layer", "item-layer"}
+    return { "not-colliding-with-itself", "doodad-layer", "item-layer" }
 end
 
 
 util.projectile_collision_mask = function()
-    return {"layer-15", "player-layer", "train-layer"}
+    return { "layer-15", "player-layer", "train-layer" }
 end
 
 
@@ -251,7 +251,7 @@ end
 
 
 util.shift_layer = function(layer, shift)
-    layer.shift = layer.shift or {0, 0}
+    layer.shift = layer.shift or { 0, 0 }
     layer.shift[1] = layer.shift[1] + shift[1]
     layer.shift[2] = layer.shift[2] + shift[2]
     return layer
