@@ -20,4 +20,5 @@ In `.vscode/cheats` there are some useful cheats for testing the mod.
 
 ## Release
 
-To make a release, ALWAYS TEST FIRST, then make a git tag and upload to mod portal.
+To make a release, ALWAYS TEST FIRST, then make a git tag and push it. Go to the github page for it and download the
+tag as a zip. Upload it to mod portal.
