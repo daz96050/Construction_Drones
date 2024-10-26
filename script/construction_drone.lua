@@ -740,8 +740,8 @@ local check_deconstruction = function(entity, player)
     local total_contents = contents(entity)
     local stack_sum = 0
     local items = prototypes.item
-    for _, item in pairs(total_contents) do
-        stack_sum = stack_sum + (item.count / items[item.name].stack_size)
+    for name, count in pairs(total_contents) do
+        stack_sum = stack_sum + (count / items[name].stack_size)
     end
     local needed = math.ceil((stack_sum + 1) / capacity)
     needed = needed - sent
