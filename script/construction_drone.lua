@@ -316,8 +316,8 @@ local rip_inventory = function(inventory, list)
     if inventory.is_empty() then
         return
     end
-    for name, count in pairs(inventory.get_contents()) do
-        list[name] = (list[name] or 0) + count
+    for _, item in pairs(inventory.get_contents()) do
+        list[item.name] = (list[item.name] or 0) + item.count
     end
 end
 
@@ -342,8 +342,8 @@ local contents = function(entity)
         for k = 1, max_line_index do
             local transport_line = get_transport_line(k)
             if transport_line then
-                for name, count in pairs(transport_line.get_contents()) do
-                    contents[name] = (contents[name] or 0) + count
+                for _, item in pairs(transport_line.get_contents()) do
+                    contents[item.name] = (contents[item.name] or 0) + item.count
                 end
             else
                 break
@@ -740,8 +740,8 @@ local check_deconstruction = function(entity, player)
     local total_contents = contents(entity)
     local stack_sum = 0
     local items = prototypes.item
-    for name, count in pairs(total_contents) do
-        stack_sum = stack_sum + (count / items[name].stack_size)
+    for _, item in pairs(total_contents) do
+        stack_sum = stack_sum + (item.count / items[item.name].stack_size)
     end
     local needed = math.ceil((stack_sum + 1) / capacity)
     needed = needed - sent
@@ -1279,10 +1279,10 @@ update_drone_sticker = function(drone_data)
 
     local offset_index = 1
 
-    for name, _ in pairs(contents) do
+    for _, item in pairs(contents) do
         local offset = offsets[offset_index]
         insert(renderings, rendering.draw_sprite {
-            sprite = "item/" .. name,
+            sprite = "item/" .. item.name,
             target = drone,
             surface = surface,
             forces = forces,
@@ -2024,8 +2024,8 @@ local on_entity_removed = function(event)
         if buffer and buffer.valid then
             local inventory = proxy_chest.get_inventory(defines.inventory.chest)
             if inventory and inventory.valid then
-                for name, count in pairs(inventory.get_contents()) do
-                    buffer.insert { name = name, count = count }
+                for _, item in pairs(inventory.get_contents()) do
+                    buffer.insert { name = item.name, count = item.count, quality = item.quality }
                 end
             end
         end
