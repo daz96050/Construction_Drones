@@ -1378,7 +1378,7 @@ local unit_clear_target = function(unit, target)
     end
     unit.speed = unit.prototype.speed
     local non_colliding_position = unit.surface.find_non_colliding_position(unit.name, position, 0, 0.5)
-    unit.set_command { type = defines.command.go_to_location, destination = position, radius = 1 }
+    unit.commandable.set_command { type = defines.command.go_to_location, destination = position, radius = 1 }
 end
 
 
@@ -1928,11 +1928,12 @@ process_drone_command = function(drone_data, result)
         return
     end
 
-    if drone_data.player and drone_data.player.valid and drone_data.player.character then
-        drone.speed = max(drone_data.player.character_running_speed * 1.2, 0.2)
-    else
-        drone.speed = 1
-    end
+    -- todo: what does this do??
+    -- if drone_data.player and drone_data.player.valid and drone_data.player.character then
+    --     drone.speed = max(drone_data.player.character_running_speed * 1.2, 0.2)
+    -- else
+    -- end
+    drone.speed = 0.2
 
     if (result == defines.behavior_result.fail) then
         -- print("Fail")
