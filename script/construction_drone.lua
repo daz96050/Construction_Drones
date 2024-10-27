@@ -1612,7 +1612,7 @@ local process_repair_command = function(drone_data)
     end
 
     local ticks_to_repair = random(20, 30)
-    local repair_cycles_left = math.ceil((target.prototype.max_health - target.health) / repair_speed)
+    local repair_cycles_left = math.ceil((target.max_health - target.health) / repair_speed)
     local max_left = math.ceil(stack.durability / repair_speed)
     ticks_to_repair = math.min(ticks_to_repair, repair_cycles_left)
     ticks_to_repair = math.min(ticks_to_repair, max_left)
