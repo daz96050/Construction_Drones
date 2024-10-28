@@ -48,7 +48,6 @@ local unit = {
     collision_box = { { -0.01, -0.01 }, { 0.01, 0.01 } },
     -- collision_box = {{-0.2, -0.2}, {0.2, 0.2}},
     selection_box = { { -0.6 * scale, -1.0 * scale }, { 0.6 * scale, 0.4 * scale } },
-    collision_mask = util.ground_unit_collision_mask(), -- will be replaced in data-final-fixes.lua
     attack_parameters = {
         type = "beam",
         range = 16,
