@@ -2,7 +2,7 @@
 Version: 2.0.1
 Date: TBD
   Bugfixes:
-    - Fixed errors of type "Unknown item name: 1"
+    - Fixed various runtime bugs related to upgrading to 2.0.0
 ---------------------------------------------------------------------------------------------------
 Version: 2.0.0
 Date: 2024-10-25T23:41:15+02:00

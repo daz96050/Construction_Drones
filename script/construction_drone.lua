@@ -1664,7 +1664,7 @@ local process_upgrade_command = function(drone_data)
 
     local surface = drone.surface
     local prototype = drone_data.upgrade_prototype
-    local direction = target.get_upgrade_direction()
+    local direction = target.direction
     local original_name = target.name
     local entity_type = target.type
     local index = unique_index(target)
