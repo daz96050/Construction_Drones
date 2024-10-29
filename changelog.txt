@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 2.0.2
+Date: TBD
+  Bugfixes:
+    - Fixed the collision, they should now correctly squeeze through belts, rail tracks, etc.
+---------------------------------------------------------------------------------------------------
 Version: 2.0.1
 Date: 2024-10-28T14:19:53+01:00
   Bugfixes:
