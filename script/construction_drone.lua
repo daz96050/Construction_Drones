@@ -671,12 +671,12 @@ local check_proxy = function(entity, player)
     local items = entity.item_requests
 
     local position = entity.position
-    for name, count in pairs(items) do
-        if player.get_item_count(name) > 0 or player.cheat_mode then
+    for _, item in pairs(items) do
+        if player.get_item_count(item.name) > 0 or player.cheat_mode then
             local drone_data = {
                 player = player,
                 order = drone_orders.request_proxy,
-                pickup = { stack = { name = name, count = count } },
+                pickup = { stack = { name = item.name, count = item.count } },
                 target = entity,
             }
             make_path_request(drone_data, player, entity)
@@ -1757,8 +1757,10 @@ local process_request_proxy_command = function(drone_data)
     local requests = target.item_requests
 
     local stack
-    for name, count in pairs(requests) do
-        stack = find_item_stack(name)
+    local requests_index
+    for k, item in pairs(requests) do
+        stack = find_item_stack(item.name)
+        requests_index = k
         if stack then
             break
         end
@@ -1794,15 +1796,14 @@ local process_request_proxy_command = function(drone_data)
         return cancel_drone_order(drone_data)
     end
     drone_inventory.remove({ name = stack_name, count = inserted })
-    requests[stack_name] = requests[stack_name] - inserted
-    if requests[stack_name] <= 0 then
-        requests[stack_name] = nil
+    requests[requests_index].count = requests[requests_index].count - inserted
+    if requests[requests_index].count <= 0 then
+        requests[requests_index] = nil
     end
 
+    -- If we fulfilled all the requests, we can safely destroy the proxy chest
     if not next(requests) then
         target.destroy()
-    else
-        target.item_requests = requests
     end
 
     local build_time = get_build_time(drone_data)

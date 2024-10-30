@@ -1,8 +1,9 @@
 ---------------------------------------------------------------------------------------------------
 Version: 2.0.2
-Date: TBD
+Date: 2024-10-30T11:46:22+01:00
   Bugfixes:
     - Fixed the collision, they should now correctly squeeze through belts, rail tracks, etc.
+    - Fixed a crash when ordering drones to insert items into entities
 ---------------------------------------------------------------------------------------------------
 Version: 2.0.1
 Date: 2024-10-28T14:19:53+01:00
