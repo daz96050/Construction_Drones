@@ -303,7 +303,7 @@ local transfer_inventory = function(source, destination)
     for k = 1, #source do
         local stack = source[k]
         if stack and stack.valid and stack.valid_for_read and can_insert(stack) then
-            local remove_stack = { name = stack.name, count = insert(stack) }
+            local remove_stack = { name = stack.name, count = insert(stack), quality = stack.quality }
             if remove_stack.count > 0 then
                 remove(remove_stack)
             end
@@ -1449,11 +1449,13 @@ local process_construct_command = function(drone_data)
     end
     data.already_targeted[index] = nil
 
-    for name, count in pairs(colliding_items) do
-        local inserted = drone_inventory.insert { name = name, count = count }
+    for _, item in pairs(colliding_items) do
+        local inserted = drone_inventory.insert { name = item.name, count = item.count, quality = item.quality }
 
-        if inserted < count then
-            surface.spill_item_stack(position, { name = name, count = count - inserted }, false, force)
+        if inserted < item.count then
+            surface.spill_item_stack(position,
+                { name = item.name, count = item.count - inserted, quality = item.quality },
+                false, force)
         end
     end
 
