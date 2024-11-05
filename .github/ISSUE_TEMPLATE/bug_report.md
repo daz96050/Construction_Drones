@@ -9,7 +9,7 @@ assignees: ''
 
 Make sure to add the following:
 
-* [factorio-current.log](https://wiki.factorio.com/Log_file) (recommended file uploading service: [https://www.file.io/]())
-* A **step by step guide** on how to reproduce the bug
+* factorio-current.log (see https://wiki.factorio.com/Log_file) (recommended file uploading service: https://www.file.io/)
+* A __step by step guide__ on how to reproduce the bug
 * Any error messages
-* upload a save file where the bug is reproducible (recommended file uploading service: [https://www.file.io/]())
+* upload a save file where the bug is reproducible (recommended file uploading service: https://www.file.io/)
