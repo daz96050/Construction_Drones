@@ -1453,9 +1453,12 @@ local process_construct_command = function(drone_data)
         local inserted = drone_inventory.insert { name = item.name, count = item.count, quality = item.quality }
 
         if inserted < item.count then
-            surface.spill_item_stack(position,
-                { name = item.name, count = item.count - inserted, quality = item.quality },
-                false, force)
+            surface.spill_item_stack({
+                position = position,
+                stack = { name = item.name, count = item.count - inserted, quality = item.quality },
+                enable_looted = false,
+                force = force
+            })
         end
     end
 
