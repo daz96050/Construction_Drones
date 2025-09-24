@@ -2144,11 +2144,36 @@ local on_script_path_request_finished = function(event)
 end
 
 
+local cancel_player_drone_orders = function(player)
+    -- Iterate through all drones commanded by this player
+    for unit_number, drone_data in pairs(data.drone_commands) do
+        if drone_data.player == player and drone_data.entity and drone_data.entity.valid then
+            -- Cancel all current tasks and remove relevant targets
+            clear_extra_targets(drone_data)
+            clear_target(drone_data)
+
+            -- Clean up any lingering tasks
+            if data.job_queue[player.index] then
+                data.job_queue[player.index][unit_number] = nil
+            end
+
+            -- Reset the drone's internal state
+            drone_data.order = nil
+            drone_data.target = nil
+
+            -- Set the drone to idle and prevent it from reassuming old tasks
+            set_drone_idle(drone_data.entity)
+        end
+    end
+
+end
+
 local on_construction_drone_toggle = function(event)
     local player = game.players[event.player_index]
     local enabled = not player.is_shortcut_toggled("construction-drone-toggle")
     player.set_shortcut_toggled("construction-drone-toggle", enabled)
     if not enabled then
+        cancel_player_drone_orders(player)
         data.job_queue[event.player_index] = nil
     end
 end
