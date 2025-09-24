@@ -1,73 +1,9 @@
 ---------------------------------------------------------------------------------------------------
-Version: 2.0.4
-Date: 2024-11-29T00:03:47+01:00
+Version: 0.0.1
+Date: 2025-09-23T00:00:00+00:00
   Bugfixes:
-    - Fixed a crash when the drones were spilling items
----------------------------------------------------------------------------------------------------
-Version: 2.0.3
-Date: 2024-11-04T21:41:03+01:00
-  Bugfixes:
-    - Fixed a crash that could occur if a construction was ordered on top of one or more spilled items
----------------------------------------------------------------------------------------------------
-Version: 2.0.2
-Date: 2024-10-30T11:46:22+01:00
-  Bugfixes:
-    - Fixed the collision, they should now correctly squeeze through belts, rail tracks, etc.
-    - Fixed a crash when ordering drones to insert items into entities
----------------------------------------------------------------------------------------------------
-Version: 2.0.1
-Date: 2024-10-28T14:19:53+01:00
-  Bugfixes:
-    - Fixed various runtime bugs related to upgrading to 2.0.0
----------------------------------------------------------------------------------------------------
-Version: 2.0.0
-Date: 2024-10-25T23:41:15+02:00
-  Major Features:
-    - Added support for Factorio 2.0 and Space Age expansion. Please note that the support is highly experimental
----------------------------------------------------------------------------------------------------
-Version: 1.0.7-rc
-Date: 2022-06-19T20:09:37+02:00
-  Bugfixes:
-    - Applied a better permanent fix for the missing empty-sprite.png (#8)
----------------------------------------------------------------------------------------------------
-Version: 1.0.6
-Date: 2022-06-19T12:46:35+02:00
-  Bugfixes:
-    - Hotfix for missing empty-sprite.png (#8)
----------------------------------------------------------------------------------------------------
-Version: 1.0.5
-Date: 2022-06-11T00:02:28+02:00
-  Bugfixes:
-    - Fix changing belt direction (#2)
-    - Do not set up collision on tiles that are not loaded
-    - Fix upgrade direction #5
-    - Do cliff correction when destroying cliffs (#6)
----------------------------------------------------------------------------------------------------
-Version: 1.0.4
-Date: 2021-12-06T13:55:42+01:00
-  Bugfixes:
-    - Ghost building paths over any other path no longer causes a duplication of the removed path
----------------------------------------------------------------------------------------------------
-Version: 1.0.3
-Date: 2021-12-06T12:26:50+01:00
-  Bugfixes:
-    - Drones are again able to correctly traverse rails and belts
+    - Fixed drones deploying from remote view
   Changes:
-    - Added partial localisation for german
----------------------------------------------------------------------------------------------------
-Version: 1.0.2
-Date: 2021-11-20T22:50:17+01:00
-  Changes:
-    - Drones are no longer able to swim
-    - Added partial localisation for russian and swedish
----------------------------------------------------------------------------------------------------
-Version: 1.0.1
-Date: 2021-02-06T12:33:39+01:00
-  Bugfixes:
-    - Fix correct resource loading so the mod actually loads now
----------------------------------------------------------------------------------------------------
-Version: 1.0.0
-Date: 2021-01-24T16:00:24+01:00
+    - Drones will no longer return to the closest player and instead return to the player who spawned them.
   Info:
-    - Forked from Klonan's original mod and published this onto the mod portal
-    - For the rest of the change log, check Klonan's original mod :)
+    - Forked from Tubbles' fork, which was forked from Klonan

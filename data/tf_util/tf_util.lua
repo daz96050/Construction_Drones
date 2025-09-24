@@ -139,7 +139,7 @@ end
 
 
 util.path = function(str)
-    return "__Updated_Construction_Drones__/" .. str
+    return "__Construction_Drones__/" .. str
 end
 
 

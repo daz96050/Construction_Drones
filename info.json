@@ -1,11 +1,11 @@
 {
-    "name": "Updated_Construction_Drones",
-    "version": "2.0.4",
-    "title": "Updated Construction Drones",
-    "author": "Tubbles",
+    "name": "Construction_Drones_Forked",
+    "version": "0.0.1",
+    "title": "Updated Construction Drones - Forked",
+    "author": "daz96050",
     "contact": "",
-    "homepage": "https://github.com/Tubbles/Construction_Drones",
-    "description": "Adds ground based construction robots. A repackage of roy192's fork of the original mod by Klonan.\n\nWARNING: Please note that 2.0 support is experimental, use at your own risk!",
+    "homepage": "https://github.com/daz96050/Construction_Drones",
+    "description": "Adds ground based construction robots. A repackage the original mod by Klonan. Forked to fix some long-standing issues.",
     "dependencies": [
         "base >= 2.0.0",
         "(?) Hovercraft",

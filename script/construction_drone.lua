@@ -100,6 +100,13 @@ local get_prototype = function(name)
     return prototype
 end
 
+local player_physical_position = function(player)
+    if player.controller_type == 7 then -- remote map view
+        return player.physical_position
+    else
+        return player.position
+    end
+end
 
 local get_beam_orientation = function(source_position, target_position)
     -- Angle in rads
@@ -379,7 +386,7 @@ local make_path_request = function(drone_data, player, target)
     local path_id = player.surface.request_path {
         bounding_box = prototype.collision_box,
         collision_mask = prototype.collision_mask,
-        start = player.position,
+        start = player_physical_position(player),
         goal = target.position,
         force = player.force,
         radius = target.get_radius() + 4,
@@ -426,31 +433,45 @@ end
 
 
 local make_player_drone = function(player)
+    -- Find a spawn position close to the player.
     local position = player.surface.find_non_colliding_position(
-        names.units.construction_drone,
-        player.position,
-        5,
-        0.5,
-        false
+            names.units.construction_drone,
+            player_physical_position(player),
+            5,
+            0.5,
+            false
     )
+
     if not position then
         return
     end
 
+    -- Remove a drone from the player's inventory.
     local removed = player.remove_item({ name = names.units.construction_drone, count = 1 })
     if removed == 0 then
         return
     end
 
+    -- Create the drone entity.
     local drone = player.surface.create_entity {
         name = names.units.construction_drone,
         position = position,
         force = player.force,
     }
 
+    -- Attach the player to the drone data entry.
+    local drone_data = {
+        entity = drone,
+        player = player, -- Associate the spawning player with the drone.
+    }
+
+    -- Register the drone for tracking.
     script.register_on_object_destroyed(drone)
+    data.drone_commands = data.drone_commands or {}
+    data.drone_commands[drone.unit_number] = drone_data
 
     return drone
+
 end
 
 
@@ -464,31 +485,19 @@ end
 
 
 local find_a_player = function(drone_data)
-    local entity = drone_data.entity
-    if not (entity and entity.valid) then
+    local drone = drone_data.entity
+    if not (drone and drone.valid) then
         return
     end
 
-    if drone_data.player and drone_data.player.valid and drone_data.player.surface == entity.surface then
+    -- Ensure the drone always targets the player who spawned it.
+    local original_player = drone_data.player
+    if original_player and original_player.valid and original_player.surface == drone.surface then
         return true
     end
 
-    local closest
-    local min_distance = math.huge
-    for _, player in pairs(game.connected_players) do
-        if player.surface == entity.surface then
-            local distance = distance(player.position, entity.position)
-            if distance < min_distance then
-                closest = player
-                min_distance = distance
-            end
-        end
-    end
-
-    if closest then
-        drone_data.player = closest
-        return true
-    end
+    -- If the original player is disconnected or invalid, the drone does nothing.
+    return false
 end
 
 
@@ -510,20 +519,25 @@ local set_drone_idle = function(drone)
     if not (drone and drone.valid) then
         return
     end
-    -- print("Setting drone idle")
+
+    -- Retrieve the drone's data.
     local drone_data = data.drone_commands[drone.unit_number]
 
     if drone_data then
+        -- Return to the original player or wait.
         if find_a_player(drone_data) then
             process_return_to_player_command(drone_data)
             return
         else
+            -- Wait if the original player is unavailable.
             return drone_wait(drone_data, random(200, 400))
         end
     end
 
+    -- Set the drone to idle if no data is present.
     set_drone_order(drone, {})
 end
+
 
 
 local check_ghost = function(entity, player)
@@ -825,6 +839,12 @@ local check_repair = function(entity, player)
     if not (entity and entity.valid) then
         return true
     end
+
+    -- Respect player's allow_bot_repair setting
+    if not player.is_shortcut_toggled("drone-repair-toggle") then
+        return true -- Repairing disabled; skip
+    end
+
 
     if entity.has_flag("not-repairable") then
         return
@@ -2133,10 +2153,22 @@ local on_construction_drone_toggle = function(event)
     end
 end
 
+local on_drone_repair_toggle = function(event)
+    local player = game.players[event.player_index]
+    local enabled = not player.is_shortcut_toggled("drone-repair-toggle")
+    player.set_shortcut_toggled("drone-repair-toggle", enabled)
+    if not enabled then
+        data.job_queue[event.player_index] = nil
+    end
+end
+
 
 local on_lua_shortcut = function(event)
     if event.prototype_name == "construction-drone-toggle" then
         on_construction_drone_toggle(event)
+    end
+    if event.prototype_name == "drone-repair-toggle" then
+        on_drone_repair_toggle(event)
     end
 end
 
@@ -2165,6 +2197,7 @@ lib.events = {
     [defines.events.on_script_path_request_finished] = on_script_path_request_finished,
     [defines.events.on_lua_shortcut] = on_lua_shortcut,
     ["construction-drone-toggle"] = on_construction_drone_toggle,
+    ["drone-repair-toggle"] = on_drone_repair_toggle,
 
     [defines.events.on_runtime_mod_setting_changed] = on_runtime_mod_setting_changed,
 }
