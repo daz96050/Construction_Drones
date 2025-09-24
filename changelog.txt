@@ -3,6 +3,7 @@ Version: 0.0.3
 Date: 2025-09-24
   Feature:
     - When drones are toggled off, they immediately cancel their current job and return to the player
+    - Added player settings for multiplayer, preventing different actions made by other players
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.2
 Date: 2025-09-24

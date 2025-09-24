@@ -141,6 +141,35 @@ end
 --     end
 -- end
 
+local should_process_entity = function(entity, player, order_type)
+    if not (entity and entity.valid and player and player.valid) then
+        return false
+    end
+
+    -- Map drone order type to the corresponding setting
+    local setting_name
+    if order_type == drone_orders.construct then
+        setting_name = "drone_process_other_player_construction"
+    elseif order_type == drone_orders.deconstruct then
+        setting_name = "drone_process_other_player_deconstruction"
+    elseif order_type == drone_orders.upgrade then
+        setting_name = "drone_process_other_player_upgrade"
+    elseif order_type == drone_orders.request_proxy then
+        setting_name = "drone_process_other_player_proxies"
+    else
+        return true  -- For unsupported types (repair, cliff_deconstruct), process as original
+    end
+
+    -- Check the player's runtime setting
+    local player_specific = settings.get_player_settings(player)[setting_name].value
+    if not player_specific then
+        return true  -- Setting disabled: process any valid entity
+    end
+
+    -- only process if last_user matches the player or is nil (for neutral entities)
+    return entity.last_user == nil or entity.last_user == player
+end
+
 local get_radius_map = function()
     -- Caching radius map, deliberately not local or data
     if radius_map then
@@ -545,6 +574,10 @@ local check_ghost = function(entity, player)
         return
     end
 
+    if not should_process_entity(entity, player, drone_orders.construct) then
+        return
+    end
+
     if data.already_targeted[entity.unit_number] then
         return
     end
@@ -574,7 +607,7 @@ local check_ghost = function(entity, player)
         end
         local unit_number = ghost.unit_number
         local should_check = not data.already_targeted[unit_number]
-        if should_check then
+        if should_check and should_process_entity(entity, player, drone_orders.construct) then
             if ghost.ghost_name == entity.ghost_name then
                 data.already_targeted[unit_number] = true
                 extra_targets[unit_number] = ghost
@@ -606,6 +639,10 @@ end
 
 local check_upgrade = function(entity, player)
     if not (entity and entity.valid) then
+        return
+    end
+
+    if not should_process_entity(entity, player, drone_orders.upgrade) then
         return
     end
 
@@ -644,7 +681,7 @@ local check_upgrade = function(entity, player)
         end
         local nearby_index = nearby.unit_number
         local should_check = not data.already_targeted[nearby_index]
-        if should_check then
+        if should_check and should_process_entity(entity, player, drone_orders.upgrade) then
             data.already_targeted[nearby_index] = true
             extra_targets[nearby_index] = nearby
             count = count + 1
@@ -670,6 +707,10 @@ end
 
 local check_proxy = function(entity, player)
     if not (entity and entity.valid) then
+        return
+    end
+
+    if not should_process_entity(entity, player, drone_orders.request_proxy) then
         return
     end
 
@@ -727,6 +768,11 @@ local check_deconstruction = function(entity, player)
     if not (entity and entity.valid) then
         return
     end
+
+    if not should_process_entity(entity, player, drone_orders.deconstruct) then
+        return
+    end
+
     if not entity.to_be_deconstructed() then
         return
     end
@@ -775,8 +821,7 @@ local check_deconstruction = function(entity, player)
             end
             local nearby_index = unique_index(nearby)
             local should_check = not data.already_targeted[nearby_index]
-            if should_check then
-                -- nearby.surface.create_entity{name = "tutorial-flying-text", position = nearby.position, text = "  B"}
+            if should_check and should_process_entity(entity, player, drone_orders.deconstruct) then
                 data.already_targeted[nearby_index] = true
                 data.sent_deconstruction[nearby_index] = (data.sent_deconstruction[nearby_index] or 0) + 1
                 extra_targets[nearby_index] = nearby
@@ -1343,15 +1388,6 @@ local process_pickup_command = function(drone_data)
     return process_drone_command(drone_data)
 end
 
-
--- local get_dropoff_stack = function(drone_data)
---     local stack = drone_data.dropoff.stack
---     if stack and stack.valid and stack.valid_for_read then
---         return stack
---     end
---     return get_drone_first_stack(drone_data)
--- end
-
 local process_dropoff_command = function(drone_data)
     -- local drone = drone_data.entity
     -- print("Procesing dropoff command. "..drone.unit_number)
@@ -1362,26 +1398,6 @@ local process_dropoff_command = function(drone_data)
 
     find_a_player(drone_data)
 end
-
-
--- local unit_move_away = function(unit, target, multiplier)
---     local multiplier = multiplier or 1
---     local r = (get_radius(target) + get_radius(unit)) * (1 + (random() * 4))
---     r = r * multiplier
---     local position = {x = nil, y = nil}
---     if unit.position.x > target.position.x then
---         position.x = unit.position.x + r
---     else
---         position.x = unit.position.x - r
---     end
---     if unit.position.y > target.position.y then
---         position.y = unit.position.y + r
---     else
---         position.y = unit.position.y - r
---     end
---     unit.speed = unit.prototype.speed * (0.95 + (random() / 10))
---     unit.set_command {type = defines.command.go_to_location, destination = position, radius = 2}
--- end
 
 local unit_clear_target = function(unit, target)
     local r = get_radius(unit) + get_radius(target) + 1
@@ -2243,24 +2259,47 @@ lib.on_init = function()
 
     for _, player in pairs(game.players) do
         player.set_shortcut_toggled("construction-drone-toggle", true)
+        local player_settings = settings.get_player_settings(player)
+        if not player_settings["drone_process_other_player_construction"] then
+            player_settings["drone_process_other_player_construction"] = { value = false }
+        end
+        if not player_settings["drone_process_other_player_deconstruction"] then
+            player_settings["drone_process_other_player_deconstruction"] = { value = false }
+        end
+        if not player_settings["drone_process_other_player_upgrade"] then
+            player_settings["drone_process_other_player_upgrade"] = { value = false }
+        end
+        if not player_settings["drone_process_other_player_proxies"] then
+            player_settings["drone_process_other_player_proxies"] = { value = false }
+        end
     end
 
     on_runtime_mod_setting_changed()
 end
 
-
 lib.on_configuration_changed = function()
     game.map_settings.path_finder.use_path_cache = false
-
     data.path_requests = data.path_requests or {}
     data.request_count = data.request_count or {}
-
     prune_commands()
 
     if not data.set_default_shortcut then
         data.set_default_shortcut = true
         for k, player in pairs(game.players) do
             player.set_shortcut_toggled("construction-drone-toggle", true)
+            local player_settings = settings.get_player_settings(player)
+            if not player_settings["drone_process_other_player_construction"] then
+                player_settings["drone_process_other_player_construction"] = { value = false }
+            end
+            if not player_settings["drone_process_other_player_deconstruction"] then
+                player_settings["drone_process_other_player_deconstruction"] = { value = false }
+            end
+            if not player_settings["drone_process_other_player_upgrade"] then
+                player_settings["drone_process_other_player_upgrade"] = { value = false }
+            end
+            if not player_settings["drone_process_other_player_proxies"] then
+                player_settings["drone_process_other_player_proxies"] = { value = false }
+            end
         end
     end
 
