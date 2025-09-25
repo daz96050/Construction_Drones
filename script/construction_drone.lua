@@ -161,13 +161,13 @@ local should_process_entity = function(entity, player, order_type)
     end
 
     -- Check the player's runtime setting
-    local player_specific = settings.get_player_settings(player)[setting_name].value
-    if not player_specific then
-        return true  -- Setting disabled: process any valid entity
+    local process_others = settings.get_player_settings(player)[setting_name].value
+    if process_others then
+        return true  -- Setting enabled: process any valid entity, including other players'
+    else
+        -- Setting disabled: only process if last_user matches the player or is nil (for neutral entities)
+        return entity.last_user == nil or entity.last_user == player
     end
-
-    -- only process if last_user matches the player or is nil (for neutral entities)
-    return entity.last_user == nil or entity.last_user == player
 end
 
 local get_radius_map = function()
@@ -184,14 +184,16 @@ end
 
 
 local get_radius = function(entity, range, goto_entity)
+    -- Handle non-entity targets (e.g., plain positions) by returning 0 to avoid errors in radius lookups
+    if not entity.name then
+        return 0
+    end
     local radius
     local type = entity.type
     if type == ghost_type then
         radius = get_radius_map()[entity.ghost_name]
     elseif type == cliff_type then
         radius = entity.get_radius() * 2
-        -- elseif entity.name == drone_name then
-        --  radius = get_drone_radius()
     elseif is_commandable(entity.name) then
         if range == ranges.interact then
             radius = get_radius_map()[entity.name] + drone_prototypes[entity.name].interact_range
