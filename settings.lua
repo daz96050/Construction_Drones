@@ -19,20 +19,20 @@ data:extend({
         name = "drone_process_other_player_construction",
         setting_type = "runtime-per-user",
         default_value = false,
-        order = "a",
+        order = "b",
     },
     {
         type = "bool-setting",
         name = "drone_process_other_player_upgrade",
         setting_type = "runtime-per-user",
         default_value = false,
-        order = "a",
+        order = "c",
     },
     {
         type = "bool-setting",
         name = "drone_process_other_player_proxies",
         setting_type = "runtime-per-user",
         default_value = false,
-        order = "a",
+        order = "d",
     },
 })
