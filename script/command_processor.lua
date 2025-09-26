@@ -1,26 +1,14 @@
 check_ghost = function(entity, player)
-    if not (entity and entity.valid) then
-        return
-    end
-
-    if not should_process_entity(entity, player, drone_orders.construct) then
-        return
-    end
-
-    if data.already_targeted[entity.unit_number] then
-        return
-    end
-
-    local surface = entity.surface
-    local position = entity.position
+    if not (entity and entity.valid) then return end
+    if not should_process_entity(entity, player, drone_orders.construct) then return end
+    if data.already_targeted[entity.unit_number] then return end
 
     local item = get_build_item(entity, player)
 
-    -- print("Checking ghost "..entity.ghost_name..random())
+    if not item then return end -- if the player doesn't have the required item, we can't continue
 
-    if not item then
-        return
-    end
+    local surface = entity.surface
+    local position = entity.position
 
     local count = 0
     local extra_targets = {}
