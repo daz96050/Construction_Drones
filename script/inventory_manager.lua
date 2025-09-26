@@ -46,7 +46,7 @@ transfer_stack = function(destination, source_entity, stack)
     local transferred = 0
     local insert = destination.insert
     local can_insert = destination.can_insert
-    for k, inventory in pairs(inventories(source_entity)) do
+    for _, inventory in pairs(inventories(source_entity)) do
         while true do
             local source_stack = inventory.find_item_stack(stack.name)
             if source_stack and source_stack.valid and source_stack.valid_for_read and can_insert(source_stack) then
@@ -107,10 +107,10 @@ get_drone_stack_capacity = function()
     return drone_stack_capacity
 end
 
-get_build_item = function(prototype, player)
-    local items = prototype.items_to_place_this
+get_build_item = function(entity, player)
+    local items = entity.ghost_prototype.items_to_place_this
     for _, item in pairs(items) do
-        if player.get_item_count(item.name) >= item.count or player.cheat_mode then
+        if player.cheat_mode or player.get_item_count({name = item.name, quality = entity.quality}) >= item.count then
             return item
         end
     end
@@ -130,3 +130,20 @@ get_repair_items = function()
     return repair_items
 end
 
+inventories = function(entity)
+    local get = entity.get_inventory
+    local inventories = {}
+    for k = 1, 10 do
+        inventories[k] = get(k)
+    end
+    return inventories
+end
+
+rip_inventory = function(inventory, list)
+    if inventory.is_empty() then
+        return
+    end
+    for _, item in pairs(inventory.get_contents()) do
+        list[item.name] = (list[item.name] or 0) + item.count
+    end
+end

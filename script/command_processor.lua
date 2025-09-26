@@ -14,7 +14,7 @@ check_ghost = function(entity, player)
     local surface = entity.surface
     local position = entity.position
 
-    local item = get_build_item(entity.ghost_prototype, player)
+    local item = get_build_item(entity, player)
 
     -- print("Checking ghost "..entity.ghost_name..random())
 
@@ -89,8 +89,8 @@ check_upgrade = function(entity, player)
     end
 
     local surface = entity.surface
-    local force = entity.force
-    local item = get_build_item(upgrade_prototype, player)
+
+    local item = get_build_item(entity, player)
     if not item then
         return
     end
