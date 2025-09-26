@@ -52,7 +52,7 @@ make_player_drone = function(player)
     -- Attach the player to the drone data entry.
     local drone_data = {
         entity = drone,
-        player = player, -- Associate the spawning player with the drone.
+        player = player,
     }
 
     -- Register the drone for tracking.

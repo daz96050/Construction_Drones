@@ -30,7 +30,7 @@ check_ghost = function(entity, player)
     else
         extra = surface.find_entities_filtered { ghost_name = entity.ghost_name, position = position, radius = 5 }
     end
-    for k, ghost in pairs(extra) do
+    for _, ghost in pairs(extra) do
         if count >= 8 then
             break
         end
@@ -98,7 +98,7 @@ check_upgrade = function(entity, player)
     local count = 0
 
     local extra_targets = {}
-    for k, nearby in pairs(surface.find_entities_filtered {
+    for _, nearby in pairs(surface.find_entities_filtered {
         name = entity.name,
         position = entity.position,
         radius = 8,
@@ -152,7 +152,6 @@ check_proxy = function(entity, player)
 
     local items = entity.item_requests
 
-    local position = entity.position
     for _, item in pairs(items) do
         if player.get_item_count(item.name) > 0 or player.cheat_mode then
             local drone_data = {
@@ -235,7 +234,7 @@ check_deconstruction = function(entity, player)
         local extra_targets = {}
         local count = 10
 
-        for k, nearby in pairs(surface.find_entities_filtered {
+        for _, nearby in pairs(surface.find_entities_filtered {
             name = entity.name,
             position = entity.position,
             radius = 8,
@@ -272,7 +271,7 @@ check_deconstruction = function(entity, player)
         return
     end
 
-    for k = 1, math.min(needed, 10, player.get_item_count(names.units.construction_drone)) do
+    for _ = 1, math.min(needed, 10, player.get_item_count(names.units.construction_drone)) do
         if not (entity and entity.valid) then
             break
         end
@@ -439,7 +438,7 @@ process_construct_command = function(drone_data)
             drone_wait(drone_data, 30)
             -- print("Some idiot might be in the way too ("..drone.unit_number.." - "..game.tick..")")
             local radius = get_radius(target)
-            for k, unit in pairs(target.surface.find_entities_filtered {
+            for _, unit in pairs(target.surface.find_entities_filtered {
                 type = "unit",
                 position = position,
                 radius = radius,
@@ -509,8 +508,6 @@ process_deconstruct_command = function(drone_data)
         return cancel_drone_order(drone_data)
     end
 
-    local drone = drone_data.entity
-
     if not target.to_be_deconstructed() then
         return cancel_drone_order(drone_data)
     end
@@ -522,7 +519,6 @@ process_deconstruct_command = function(drone_data)
     local drone_inventory = get_drone_inventory(drone_data)
 
     local index = unique_index(target)
-    local unit_number = target.unit_number
 
     local drone = drone_data.entity
     if not drone_data.beam then
@@ -566,9 +562,9 @@ process_deconstruct_command = function(drone_data)
         drone.surface.set_tiles(tiles, true, false, false, true)
     end
 
-    local target = get_extra_target(drone_data)
-    if target then
-        drone_data.target = target
+    local extra_target = get_extra_target(drone_data)
+    if extra_target then
+        drone_data.target = extra_target
     else
         drone_data.dropoff = {}
     end
@@ -597,7 +593,7 @@ process_repair_command = function(drone_data)
     local drone = drone_data.entity
     local drone_inventory = get_drone_inventory(drone_data)
     local stack
-    for name, prototype in pairs(get_repair_items()) do
+    for name, _ in pairs(get_repair_items()) do
         stack = drone_inventory.find_item_stack(name)
         if stack then
             break
@@ -609,7 +605,6 @@ process_repair_command = function(drone_data)
         return cancel_drone_order(drone_data)
     end
 
-    local health = target.health
     local repair_speed = prototypes.item[stack.name].speed
     if not repair_speed then
         -- print("WTF, maybe some migration?")
@@ -873,8 +868,6 @@ process_deconstruct_cliff_command = function(drone_data)
 end
 
 process_return_to_player_command = function(drone_data, force)
-    -- print("returning to dude")
-
     local player = drone_data.player
     if not (player and player.valid) then
         return cancel_drone_order(drone_data)
