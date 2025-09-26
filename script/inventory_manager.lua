@@ -1,3 +1,5 @@
+local floor = math.floor
+local random = math.random
 get_proxy_chest = function(drone)
     local index = drone.unit_number
     local proxy_chest = data.proxy_chests[index]
@@ -108,9 +110,22 @@ get_drone_stack_capacity = function()
 end
 
 get_build_item = function(entity, player)
-    local items = entity.ghost_prototype.items_to_place_this
+    local items
+    local quality
+
+    if entity.type == "entity-ghost" or entity.type == "tile-ghost"
+    then
+        items = entity.ghost_prototype.items_to_place_this
+        quality = entity.quality
+    else
+        items = entity.get_upgrade_target().items_to_place_this
+        _, quality = entity.get_upgrade_target()
+    end
+
     for _, item in pairs(items) do
-        if player.cheat_mode or player.get_item_count({name = item.name, quality = entity.quality}) >= item.count then
+        game.print("Looking in inventory for " .. item.name .. " with quality " .. quality.level)
+        if player.cheat_mode or player.get_item_count({ name = item.name, quality = quality }) >= item.count then
+            game.print("Found item " .. item.name)
             return item
         end
     end
@@ -145,5 +160,56 @@ rip_inventory = function(inventory, list)
     end
     for _, item in pairs(inventory.get_contents()) do
         list[item.name] = (list[item.name] or 0) + item.count
+    end
+end
+
+stack_from_product = function(product)
+    local count = floor(product.amount or (random() * (product.amount_max - product.amount_min) + product.amount_min))
+    if count < 1 then
+        return
+    end
+    local stack = { name = product.name, count = count }
+    return stack
+end
+
+contents = function(entity)
+    local contents = {}
+    local get_inventory = entity.get_inventory
+
+    for k = 1, 10 do
+        local inventory = get_inventory(k)
+        if inventory then
+            rip_inventory(inventory, contents)
+        else
+            break
+        end
+    end
+
+    local max_line_index = belt_connectible_type[entity.type]
+
+    if max_line_index then
+        local get_transport_line = entity.get_transport_line
+        for k = 1, max_line_index do
+            local transport_line = get_transport_line(k)
+            if transport_line then
+                for _, item in pairs(transport_line.get_contents()) do
+                    contents[item.name] = (contents[item.name] or 0) + item.count
+                end
+            else
+                break
+            end
+        end
+    end
+
+    return contents
+end
+
+search_drone_inventory = function(drone_inventory, item)
+    return drone_inventory.get_item_count({name = item.name, quality = item.quality})
+end
+
+remove_from_inventory = function(inventory, item, count)
+    if count then inventory.remove{ name = item.name, quality = item.quality, count = count}
+    else inventory.remove{name = item.name, quality = item.quality}
     end
 end

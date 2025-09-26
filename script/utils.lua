@@ -137,48 +137,6 @@ in_construction_range = function(drone, target)
     return distance <= ((get_radius(drone, ranges.interact) + (get_radius(target))))
 end
 
-stack_from_product = function(product)
-    local count = floor(product.amount or (random() * (product.amount_max - product.amount_min) + product.amount_min))
-    if count < 1 then
-        return
-    end
-    local stack = { name = product.name, count = count }
-    -- print(serpent.line(stack))
-    return stack
-end
-
-contents = function(entity)
-    local contents = {}
-    local get_inventory = entity.get_inventory
-
-    for k = 1, 10 do
-        local inventory = get_inventory(k)
-        if inventory then
-            rip_inventory(inventory, contents)
-        else
-            break
-        end
-    end
-
-    local max_line_index = belt_connectible_type[entity.type]
-
-    if max_line_index then
-        local get_transport_line = entity.get_transport_line
-        for k = 1, max_line_index do
-            local transport_line = get_transport_line(k)
-            if transport_line then
-                for _, item in pairs(transport_line.get_contents()) do
-                    contents[item.name] = (contents[item.name] or 0) + item.count
-                end
-            else
-                break
-            end
-        end
-    end
-
-    return contents
-end
-
 validate = function(entities)
     for k, entity in pairs(entities) do
         if not entity.valid then

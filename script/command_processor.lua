@@ -13,10 +13,8 @@ check_ghost = function(entity, player)
     local count = 0
     local extra_targets = {}
     local extra
-    if entity.name == "tile-ghost" then
-        extra = surface.find_entities_filtered { type = tile_ghost_type, position = position, radius = 3 }
-    else
-        extra = surface.find_entities_filtered { ghost_name = entity.ghost_name, position = position, radius = 5 }
+    if entity.name == "tile-ghost" then extra = surface.find_entities_filtered { type = tile_ghost_type, position = position, radius = 3 }
+    else extra = surface.find_entities_filtered { ghost_name = entity.ghost_name, position = position, quality = entity.quality.name, radius = 5 }
     end
     for _, ghost in pairs(extra) do
         if count >= 8 then
@@ -25,7 +23,7 @@ check_ghost = function(entity, player)
         local unit_number = ghost.unit_number
         local should_check = not data.already_targeted[unit_number]
         if should_check and should_process_entity(entity, player, drone_orders.construct) then
-            if ghost.ghost_name == entity.ghost_name then
+            if ghost.ghost_name == entity.ghost_name and ghost.quality == entity.quality then
                 data.already_targeted[unit_number] = true
                 extra_targets[unit_number] = ghost
                 count = count + 1
@@ -45,8 +43,8 @@ check_ghost = function(entity, player)
         pickup = { stack = item },
         target = target,
         entity_ghost_name = entity.ghost_name,
-        item_used_to_place = item.name,
-        item_used_to_place_count = origCount,
+        item_to_place = item,
+        item_place_count = origCount,
         extra_targets = extra_targets,
     }
 
@@ -54,34 +52,20 @@ check_ghost = function(entity, player)
 end
 
 check_upgrade = function(entity, player)
-    if not (entity and entity.valid) then
-        return
-    end
-
-    if not should_process_entity(entity, player, drone_orders.upgrade) then
-        return
-    end
-
-    if not entity.to_be_upgraded() then
-        return
-    end
+    if not (entity and entity.valid) then return end
+    if not should_process_entity(entity, player, drone_orders.upgrade) then return end
+    if not entity.to_be_upgraded() then return end
 
     local index = unique_index(entity)
-    if data.already_targeted[index] then
-        return
-    end
+    if data.already_targeted[index] then return end
 
-    local upgrade_prototype = entity.get_upgrade_target()
-    if not upgrade_prototype then
-        return
-    end
+    local upgrade_prototype, upgrade_quality = entity.get_upgrade_target()
+    if not upgrade_prototype then return end
 
     local surface = entity.surface
 
     local item = get_build_item(entity, player)
-    if not item then
-        return
-    end
+    if not item then game.print("no build item found") return end
 
     local count = 0
 
@@ -106,17 +90,17 @@ check_upgrade = function(entity, player)
 
     local target = surface.get_closest(player.position, extra_targets)
     extra_targets[target.unit_number] = nil
-
+    game.print("Adding " .. count .. " to stack "..item.name .." with quality " .. upgrade_quality.level)
     local drone_data = {
         player = player,
         order = drone_orders.upgrade,
-        pickup = { stack = { name = item.name, count = count } },
+        pickup = { stack = { name = item.name, count = count, quality = upgrade_quality } },
         target = target,
         extra_targets = extra_targets,
         upgrade_prototype = upgrade_prototype,
-        item_used_to_place = item.name,
+        item_to_place = item,
     }
-
+    game.print("dispatching drone")
     make_path_request(drone_data, player, target)
 end
 
@@ -145,7 +129,7 @@ check_proxy = function(entity, player)
             local drone_data = {
                 player = player,
                 order = drone_orders.request_proxy,
-                pickup = { stack = { name = item.name, count = item.count } },
+                pickup = { stack = { item } },
                 target = entity,
             }
             make_path_request(drone_data, player, entity)
@@ -161,7 +145,7 @@ check_cliff_deconstruction = function(entity, player)
         return
     end
 
-    if player.get_item_count(cliff_destroying_item) == 0 and (not player.cheat_mode) then
+    if (not player.cheat_mode) and player.get_item_count(cliff_destroying_item) == 0  then
         return
     end
 
@@ -397,16 +381,17 @@ end
 process_construct_command = function(drone_data)
     -- print("Processing construct command")
     local target = drone_data.target
-    if not (target and target.valid and drone_data.item_used_to_place_count) then
+    local item = drone_data.item_to_place
+    if not (target and target.valid and drone_data.item_place_count) then
         return cancel_drone_order(drone_data)
     end
 
     local drone_inventory = get_drone_inventory(drone_data)
-    if drone_inventory.get_item_count(drone_data.item_used_to_place) < drone_data.item_used_to_place_count then
+    if search_drone_inventory(drone_inventory, item) < drone_data.item_place_count then
         return cancel_drone_order(drone_data)
     end
 
-    if target.ghost_name ~= drone_data.entity_ghost_name then
+    if target.ghost_name ~= drone_data.entity_ghost_name and target.quality ~= item.quality then
         return cancel_drone_order(drone_data) -- entity got upgraded?
     end
 
@@ -451,9 +436,7 @@ process_construct_command = function(drone_data)
             })
         end
     end
-
-    drone_inventory.remove { name = drone_data.item_used_to_place, count = drone_data.item_used_to_place_count }
-
+    remove_from_inventory(drone_inventory, drone_data.item_to_place, drone_data.item_place_count)
     update_drone_sticker(drone_data)
 
     drone_data.target = get_extra_target(drone_data)
@@ -639,7 +622,7 @@ process_upgrade_command = function(drone_data)
     end
 
     local drone_inventory = get_drone_inventory(drone_data)
-    if drone_inventory.get_item_count(drone_data.item_used_to_place) == 0 then
+    if search_drone_inventory(drone_inventory, drone_data.item_to_place) == 0 then
         return cancel_drone_order(drone_data)
     end
 
@@ -672,15 +655,13 @@ process_upgrade_command = function(drone_data)
     }
 
     data.already_targeted[index] = nil
+    remove_from_inventory(drone_inventory, drone_data.item_to_place)
 
-    drone_inventory.remove({ name = drone_data.item_used_to_place })
-
-    local drone_inventory = get_drone_inventory(drone_data)
+    local inv = get_drone_inventory(drone_data)
     local products = get_prototype(original_name).mineable_properties.products
 
-    take_product_stacks(drone_inventory, products)
-
-    if neighbour and neighbour.valid and drone_inventory.get_item_count(drone_data.item_used_to_place) > 0 then
+    take_product_stacks(inv, products)
+    if neighbour and neighbour.valid and search_drone_inventory(inv, drone_data.item_to_place) > 0 then
         -- print("Upgrading neighbour")
         local type = neighbour.type == "underground-belt" and neighbour.belt_to_ground_type
         local neighbour_index = unique_index(neighbour)
@@ -696,22 +677,22 @@ process_upgrade_command = function(drone_data)
         }
         data.already_targeted[neighbour_index] = nil
         take_product_stacks(drone_inventory, products)
-        drone_inventory.remove({ name = drone_data.item_used_to_place })
+        remove_from_inventory(drone_inventory, drone_data.item_to_place)
     end
 
-    local target = get_extra_target(drone_data)
-    if target then
-        drone_data.target = target
+    local extra_target = get_extra_target(drone_data)
+    if extra_target then
+        drone_data.target = extra_target
     else
         drone_data.dropoff = {}
     end
 
     update_drone_sticker(drone_data)
-    local drone = drone_data.entity
+    local working_drone = drone_data.entity
     local build_time = get_build_time()
-    local orientation, offset = get_beam_orientation(drone.position, position)
-    drone.orientation = orientation
-    drone.surface.create_entity {
+    local orientation, offset = get_beam_orientation(working_drone.position, position)
+    working_drone.orientation = orientation
+    working_drone.surface.create_entity {
         name = beams.build,
         source = drone,
         target_position = position,
@@ -861,9 +842,7 @@ process_return_to_player_command = function(drone_data, force)
         return cancel_drone_order(drone_data)
     end
 
-    if not (force or move_to_player(drone_data, player)) then
-        return
-    end
+    if not (force or move_to_player(drone_data, player)) then return end
 
     local inventory = get_drone_inventory(drone_data)
     transfer_inventory(inventory, player)
