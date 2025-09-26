@@ -99,7 +99,7 @@ take_product_stacks = function(inventory, products)
     end
 end
 
-get_drone_stack_capacity = function(force)
+get_drone_stack_capacity = function()
     if drone_stack_capacity then
         return drone_stack_capacity
     end

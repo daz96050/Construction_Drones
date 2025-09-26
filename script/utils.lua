@@ -206,7 +206,7 @@ validate = function(entities)
     return entities
 end
 
-get_build_time = function(drone_data)
+get_build_time = function()
     return random(15, 25)
 end
 

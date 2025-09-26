@@ -221,7 +221,7 @@ check_deconstruction = function(entity, player)
 
     local sent = data.sent_deconstruction[index] or 0
 
-    local capacity = get_drone_stack_capacity(force)
+    local capacity = get_drone_stack_capacity()
     local total_contents = contents(entity)
     local stack_sum = 0
     local items = prototypes.item
@@ -398,7 +398,6 @@ process_pickup_command = function(drone_data)
 end
 
 process_dropoff_command = function(drone_data)
-    -- local drone = drone_data.entity
     -- print("Procesing dropoff command. "..drone.unit_number)
 
     if drone_data.player then
@@ -434,7 +433,7 @@ process_construct_command = function(drone_data)
     local surface = target.surface
 
     local index = unique_index(target)
-    local colliding_items, entity, proxy = target.revive(revive_param)
+    local colliding_items, entity, _ = target.revive(revive_param)
     if not colliding_items then
         if target.valid then
             drone_wait(drone_data, 30)
@@ -472,7 +471,7 @@ process_construct_command = function(drone_data)
 
     drone_data.target = get_extra_target(drone_data)
 
-    local build_time = get_build_time(drone_data)
+    local build_time = get_build_time()
     local orientation, offset = get_beam_orientation(drone.position, position)
     drone.orientation = orientation
     drone.surface.create_entity {
@@ -527,7 +526,7 @@ process_deconstruct_command = function(drone_data)
 
     local drone = drone_data.entity
     if not drone_data.beam then
-        local build_time = get_build_time(drone_data)
+        local build_time = get_build_time()
         local orientation, offset = get_beam_orientation(drone.position, target.position)
         drone.orientation = orientation
         drone_data.beam = drone.surface.create_entity {
@@ -726,7 +725,7 @@ process_upgrade_command = function(drone_data)
 
     update_drone_sticker(drone_data)
     local drone = drone_data.entity
-    local build_time = get_build_time(drone_data)
+    local build_time = get_build_time()
     local orientation, offset = get_beam_orientation(drone.position, position)
     drone.orientation = orientation
     drone.surface.create_entity {
@@ -810,7 +809,7 @@ process_request_proxy_command = function(drone_data)
         target.destroy()
     end
 
-    local build_time = get_build_time(drone_data)
+    local build_time = get_build_time()
     local orientation, offset = get_beam_orientation(drone.position, position)
     drone.orientation = orientation
     drone.surface.create_entity {
@@ -845,7 +844,7 @@ process_deconstruct_cliff_command = function(drone_data)
 
     if not drone_data.beam then
         local drone = drone_data.entity
-        local build_time = get_build_time(drone_data)
+        local build_time = get_build_time()
         local orientation, offset = get_beam_orientation(drone.position, target.position)
         drone.orientation = orientation
         drone.surface.create_entity {
@@ -894,7 +893,7 @@ process_return_to_player_command = function(drone_data, force)
     end
 
     if player.insert({ name = names.units.construction_drone, count = 1 }) == 0 then
-        drone_wait(drone_data, random(18, 24))
+        drone_wait(drone_data, random(18, 24)) --If the drone didn't get inserted into the players inventory, wait & follow the player until it does
         return
     end
 
