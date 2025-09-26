@@ -54,7 +54,7 @@ end
 
 should_process_entity = function(entity, player, order_type)
     if not (entity and entity.valid and player and player.valid) then return false end
-    if player.force.name ~= entity.force.name then return false end
+    if player.force.name ~= entity.force.name and entity.force.name ~= "neutral" then return false end
     if player.surface ~= entity.surface then return false end -- don't process entities on other surfaces the player is not on
 
     -- Map drone order type to the corresponding setting
