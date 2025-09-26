@@ -8,7 +8,7 @@ tile_ghost_type = "tile-ghost"
 tile_deconstruction_proxy = "deconstructible-tile-proxy"
 cliff_type = "cliff"
 
-oofah = (2 ^ 0.5) / 2
+min_radius = (2 ^ 0.5) / 2
 ranges = { interact = 1, return_to_character = 3 }
 proxy_position = { 1000000, 1000000 }
 

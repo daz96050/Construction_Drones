@@ -33,10 +33,10 @@ end
 
 get_beam_orientation = function(source_position, target_position)
     -- Angle in rads
-    local angle = angle(target_position, source_position)
+    local beam_angle = angle(target_position, source_position)
 
     -- Convert to orientation
-    local orientation = (angle / (2 * math.pi)) - 0.25
+    local orientation = (beam_angle / (2 * math.pi)) - 0.25
     if orientation < 0 then
         orientation = orientation + 1
     end
@@ -45,9 +45,9 @@ get_beam_orientation = function(source_position, target_position)
 
     --[[x = x cos θ − y sin θ
     y = x sin θ + y cos θ]]
-    angle = angle + (math.pi / 2)
-    local x1 = (x * cos(angle)) - (y * sin(angle))
-    local y1 = (x * sin(angle)) + (y * cos(angle))
+    beam_angle = beam_angle + (math.pi / 2)
+    local x1 = (x * cos(beam_angle)) - (y * sin(beam_angle))
+    local y1 = (x * sin(beam_angle)) + (y * cos(beam_angle))
 
     return orientation, { x1, y1 - 0.5 }
 end
@@ -117,8 +117,8 @@ get_radius = function(entity, range, goto_entity)
         radius = get_radius_map()[entity.name]
     end
 
-    if radius < oofah then
-        return oofah
+    if radius < min_radius then
+        return min_radius
     end
     return radius
 end
@@ -144,24 +144,6 @@ stack_from_product = function(product)
     local stack = { name = product.name, count = count }
     -- print(serpent.line(stack))
     return stack
-end
-
-inventories = function(entity)
-    local get = entity.get_inventory
-    local inventories = {}
-    for k = 1, 10 do
-        inventories[k] = get(k)
-    end
-    return inventories
-end
-
-rip_inventory = function(inventory, list)
-    if inventory.is_empty() then
-        return
-    end
-    for _, item in pairs(inventory.get_contents()) do
-        list[item.name] = (list[item.name] or 0) + item.count
-    end
 end
 
 contents = function(entity)
