@@ -282,7 +282,7 @@ update_drone_sticker = function(drone_data)
     })
 
     if number == 1 then
-        local attemptor = rendering.draw_sprite {
+        local r = rendering.draw_sprite {
             sprite = "item/" .. contents[1].name,
             target = {entity = drone, offset = { 0, -0.5 }},
             surface = surface,
@@ -291,7 +291,7 @@ update_drone_sticker = function(drone_data)
             x_scale = 0.5,
             y_scale = 0.5,
         }
-        insert(renderings, attemptor)
+        insert(renderings, r)
         draw_quality_sticker(drone_data, renderings, contents[1].quality)
         return
     end
@@ -318,16 +318,16 @@ draw_quality_sticker = function(drone_data, renderings, quality)
     local surface = drone.surface
     local forces = { drone.force }
 
-    local attemptor = rendering.draw_sprite {
+    local r = rendering.draw_sprite {
         sprite = "quality/" .. quality,
-        target = {entity = drone, offset = { -0.25, 0.27 }},
+        target = {entity = drone, offset = { -0.23, -0.3 }},
         surface = surface,
         forces = forces,
         only_in_alt_mode = true,
         x_scale = 0.25,
         y_scale = 0.25,
     }
-    insert(renderings, attemptor)
+    insert(renderings, r)
     return
 end
 
