@@ -186,3 +186,18 @@ get_extra_target = function(drone_data)
         return next_target
     end
 end
+
+inspect_item_properties = function(inspection, item)
+    if inspection then game.print(inspection) end
+    if not item then return end
+    for key, value in pairs(item) do
+        if type(value) == "table" then
+            game.print(key .. ": (table)")
+            for sub_key, sub_value in pairs(value) do
+                game.print("  " .. sub_key .. ": " .. tostring(sub_value))
+            end
+        else
+            game.print(key .. ": " .. tostring(value))
+        end
+    end
+end

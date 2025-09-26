@@ -41,8 +41,15 @@ transfer_stack = function(destination, source_entity, stack)
         return stack.count
     end
 
-    stack.count = math.min(stack.count, source_entity.get_item_count(stack.name))
+    --game.print("Searching for stack of " ..stack.name .. " with count " .. stack.count)
+    --if stack.quality then
+    --    game.print("Quality level: " .. stack.quality.level)
+    --end
+    quality_items = source_entity.get_item_count({name = stack.name, quality = stack.quality})
+
+    stack.count = math.min(stack.count, quality_items)
     if stack.count == 0 then
+        game.print("No items found")
         return 0
     end
     local transferred = 0
@@ -50,22 +57,25 @@ transfer_stack = function(destination, source_entity, stack)
     local can_insert = destination.can_insert
     for _, inventory in pairs(inventories(source_entity)) do
         while true do
-            local source_stack = inventory.find_item_stack(stack.name)
+            local source_stack = inventory.find_item_stack({name = stack.name, quality = stack.quality})
             if source_stack and source_stack.valid and source_stack.valid_for_read and can_insert(source_stack) then
-                local inserted = insert(stack)
+                -- game.print("inserting source stack")
+                local inserted = insert(source_stack)
+                -- game.print("inserted: " ..inserted)
                 transferred = transferred + inserted
+                -- game.print("total transferred: " ..transferred)
                 -- count should always be greater than 0, otherwise can_insert would fail
-                inventory.remove(stack)
+                inventory.remove(source_stack)
             else
                 break
             end
             if transferred >= stack.count then
-                -- print("Transferred: "..transferred)
+                -- game.print("Transferred: "..transferred)
                 return transferred
             end
         end
     end
-    -- print("Transferred end: "..transferred)
+--    game.print("Transferred end: "..transferred)
     return transferred
 end
 
@@ -205,7 +215,22 @@ contents = function(entity)
 end
 
 search_drone_inventory = function(drone_inventory, item)
-    return drone_inventory.get_item_count({name = item.name, quality = item.quality})
+    inspect_item_properties("searching for item in drone", item)
+    --game.print("searching in drone for "..item.name.. " with quality" ..item.quality)
+    for i = 1, #drone_inventory do
+        local stack = drone_inventory[i]
+        if stack and stack.valid_for_read then
+            local quality = stack.quality and stack.quality.level or "None"
+            game.print("Item: " .. stack.name .. ", Quality: " .. quality)
+        end
+    end
+
+    local item_count = drone_inventory.get_item_count({name = item.name, quality = item.quality})
+    if item_count == 0
+        then
+            game.print("No item found in drone inventory")
+    end
+    return item_count
 end
 
 remove_from_inventory = function(inventory, item, count)

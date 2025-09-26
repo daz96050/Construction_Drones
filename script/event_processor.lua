@@ -186,7 +186,7 @@ end
 on_ai_command_completed = function(event)
     local drone_data = data.drone_commands[event.unit_number]
     if drone_data then
-        -- print("Drone command complete event: "..event.unit_number.." = "..tostring(result ~= defines.behavior_result.fail))
+         game.print("Drone command complete event: "..event.unit_number.." = "..tostring(result ~= defines.behavior_result.fail))
         return process_drone_command(drone_data, event.result)
     end
 end
@@ -283,11 +283,12 @@ on_script_path_request_finished = function(event)
 
     local drone = make_player_drone(player)
     if not drone then
+        game.print("Could not create drone")
         clear_target(drone_data)
         clear_extra_targets(drone_data)
         return
     end
-
+    game.print("setting drone order")
     set_drone_order(drone, drone_data)
 end
 
