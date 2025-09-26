@@ -53,9 +53,8 @@ get_beam_orientation = function(source_position, target_position)
 end
 
 should_process_entity = function(entity, player, order_type)
-    if not (entity and entity.valid and player and player.valid) then
-        return false
-    end
+    if not (entity and entity.valid and player and player.valid) then return false end
+    if not player.force == entity.force then return false end
 
     -- Map drone order type to the corresponding setting
     local setting_name
