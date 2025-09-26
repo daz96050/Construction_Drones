@@ -1,4 +1,15 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.10
+Date: 2025-09-26
+  Bugfix:
+    - Fix error when upgrading neighbors of items like underground belts
+    - Fix drones taking more than one repair pack when performing repairs
+---------------------------------------------------------------------------------------------------
+Version: 0.0.9
+Date: 2025-09-26
+  Bugfix:
+    - Fix error when performing repair
+---------------------------------------------------------------------------------------------------
 Version: 0.0.8
 Date: 2025-09-26
   Bugfix:

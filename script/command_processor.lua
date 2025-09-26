@@ -1,3 +1,4 @@
+local random = math.random
 check_ghost = function(entity, player)
     if not (entity and entity.valid) then return end
     if not should_process_entity(entity, player, drone_orders.construct) then return end
@@ -265,58 +266,33 @@ check_deconstruction = function(entity, player)
 end
 
 check_repair = function(entity, player)
-    if not (entity and entity.valid) then
-        return true
-    end
-
-    -- Respect player's allow_bot_repair setting
-    if not player.is_shortcut_toggled("drone-repair-toggle") then
-        return true -- Repairing disabled; skip
-    end
-
-
-    if entity.has_flag("not-repairable") then
-        return
-    end
-
-    local health = entity.get_health_ratio()
-    if not (health and health < 1) then
-        return true
-    end
+    if not (entity and entity.valid) then return end
+    if not should_process_entity(entity, player, drone_orders.repair) then return end
+    if (entity.get_health_ratio() or 1) >= 1 then return end -- Entity is fully repaired
 
     local index = unique_index(entity)
-    if data.already_targeted[index] then
-        return
-    end
+    if data.already_targeted[index] then return end
 
-    local force = entity.force
-    if not (force == player.force or player.force.get_friend(force)) then
-        return
-    end
-
+    local repair_tools = get_repair_items()
     local repair_item
-    local repair_items = get_repair_items()
-    for name, item in pairs(repair_items) do
-        if player.get_item_count(name) > 0 or player.cheat_mode then
-            repair_item = item
+    for name, _ in pairs(repair_tools) do
+        if player.cheat_mode or player.get_item_count(name) > 0 then
+            repair_item = { name = name, count = 1 } -- Explicitly set count to 1
             break
         end
     end
 
-    if not repair_item then
-        return
-    end
+    if not repair_item then return end -- No repair tool available
 
     local drone_data = {
         player = player,
         order = drone_orders.repair,
-        pickup = { stack = { name = repair_item.name, count = 1 } },
+        pickup = { stack = repair_item }, -- Pickup only one repair item
         target = entity,
     }
 
-    make_path_request(drone_data, player, entity)
-
     data.already_targeted[index] = true
+    make_path_request(drone_data, player, entity)
 end
 
 check_job = function(player, job)
@@ -354,10 +330,7 @@ process_pickup_command = function(drone_data)
         return cancel_drone_order(drone_data)
     end
 
-    if not move_to_player(drone_data, player)
-    then
-        return
-    end
+    if not move_to_player(drone_data, player) then return end
 
     --game.print("Pickup chest in range, picking up item")
 
@@ -554,7 +527,7 @@ end
 process_repair_command = function(drone_data)
     -- print("Processing repair command")
     local target = drone_data.target
-
+    --TODO: Fix that drones are taking an entire stack of repair items
     if not (target and target.valid) then
         return cancel_drone_order(drone_data)
     end
@@ -669,10 +642,13 @@ process_upgrade_command = function(drone_data)
         -- print("Upgrading neighbour")
         local type = neighbour.type == "underground-belt" and neighbour.belt_to_ground_type
         local neighbour_index = unique_index(neighbour)
+        take_entity_stack(drone_inventory, neighbour)
+        remove_from_inventory(drone_inventory, drone_data.item_to_place)
         surface.create_entity {
             name = prototype.name,
             position = neighbour.position,
             direction = neighbour.direction,
+            quality = drone_data.item_to_place.quality,
             move_stuck_players = true,
             fast_replace = true,
             force = neighbour.force,
@@ -681,8 +657,6 @@ process_upgrade_command = function(drone_data)
             raise_built = true,
         }
         data.already_targeted[neighbour_index] = nil
-        take_entity_stack(drone_inventory, target)
-        remove_from_inventory(drone_inventory, drone_data.item_to_place)
     end
 
     local extra_target = get_extra_target(drone_data)
@@ -876,7 +850,6 @@ process_return_to_player_command = function(drone_data, force)
     drone_data.entity.destroy()
 end
 
-local max = math.max
 process_drone_command = function(drone_data, result)
     local drone = drone_data.entity
     if not (drone and drone.valid) then

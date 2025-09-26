@@ -39,14 +39,13 @@ transfer_stack = function(destination, source_entity, stack)
         return stack.count
     end
     local available_items
-    --game.print("Searching for stack of " ..stack.name .. " with count " .. stack.count)
     if stack.quality then
-        available_items = source_entity.get_item_count({ name = stack.name, quality = stack.quality})
-        --game.print("Quality level: " .. stack.quality.level)
+        available_items = source_entity.get_item_count({ name = stack.name, quality = stack.quality })
     else
         available_items = source_entity.get_item_count(stack.name)
     end
-    stack.count = math.min(8, available_items) -- max number of items available for transfer
+    -- Respect the requested stack count, but cap at available items
+    stack.count = math.min(stack.count, available_items)
     if stack.count == 0 then
         return 0
     end
@@ -55,31 +54,19 @@ transfer_stack = function(destination, source_entity, stack)
     local can_insert = destination.can_insert
     for _, inventory in pairs(inventories(source_entity)) do
         while stack.count > 0 do
-            -- Find stack in inventory
             local source_stack = inventory.find_item_stack({ name = stack.name, quality = stack.quality })
             if source_stack and source_stack.valid and source_stack.valid_for_read then
-                -- Only transfer up to the remaining count
                 local transfer_count = math.min(stack.count, source_stack.count)
                 local to_transfer = { name = source_stack.name, count = transfer_count, quality = source_stack.quality }
-
                 if can_insert(to_transfer) then
-                    -- Insert into destination inventory
                     local inserted = insert(to_transfer)
                     transferred = transferred + inserted
                     stack.count = stack.count - inserted
-
-                    -- Remove items from the source inventory
                     inventory.remove({ name = source_stack.name, count = inserted, quality = source_stack.quality })
                 else break end
             else break end
-            if stack.count <= 0 then
-                --game.print("Transferred total: " .. transferred)
-                return transferred
-            end
         end
     end
-
-    --game.print("Transferred end: "..transferred)
     return transferred
 end
 
