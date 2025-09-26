@@ -40,42 +40,48 @@ transfer_stack = function(destination, source_entity, stack)
         destination.insert(stack)
         return stack.count
     end
-
+    local available_items
     --game.print("Searching for stack of " ..stack.name .. " with count " .. stack.count)
-    --if stack.quality then
-    --    game.print("Quality level: " .. stack.quality.level)
-    --end
-    quality_items = source_entity.get_item_count({name = stack.name, quality = stack.quality})
-
-    stack.count = math.min(stack.count, quality_items)
+    if stack.quality then
+        available_items = source_entity.get_item_count({ name = stack.name, quality = stack.quality})
+        --game.print("Quality level: " .. stack.quality.level)
+    else
+        available_items = source_entity.get_item_count(stack.name)
+    end
+    stack.count = math.min(8, available_items) -- max number of items available for transfer
     if stack.count == 0 then
-        game.print("No items found")
         return 0
     end
     local transferred = 0
     local insert = destination.insert
     local can_insert = destination.can_insert
     for _, inventory in pairs(inventories(source_entity)) do
-        while true do
-            local source_stack = inventory.find_item_stack({name = stack.name, quality = stack.quality})
-            if source_stack and source_stack.valid and source_stack.valid_for_read and can_insert(source_stack) then
-                -- game.print("inserting source stack")
-                local inserted = insert(source_stack)
-                -- game.print("inserted: " ..inserted)
-                transferred = transferred + inserted
-                -- game.print("total transferred: " ..transferred)
-                -- count should always be greater than 0, otherwise can_insert would fail
-                inventory.remove(source_stack)
-            else
-                break
-            end
-            if transferred >= stack.count then
-                -- game.print("Transferred: "..transferred)
+        while stack.count > 0 do
+            -- Find stack in inventory
+            local source_stack = inventory.find_item_stack({ name = stack.name, quality = stack.quality })
+            if source_stack and source_stack.valid and source_stack.valid_for_read then
+                -- Only transfer up to the remaining count
+                local transfer_count = math.min(stack.count, source_stack.count)
+                local to_transfer = { name = source_stack.name, count = transfer_count, quality = source_stack.quality }
+
+                if can_insert(to_transfer) then
+                    -- Insert into destination inventory
+                    local inserted = insert(to_transfer)
+                    transferred = transferred + inserted
+                    stack.count = stack.count - inserted
+
+                    -- Remove items from the source inventory
+                    inventory.remove({ name = source_stack.name, count = inserted, quality = source_stack.quality })
+                else break end
+            else break end
+            if stack.count <= 0 then
+                --game.print("Transferred total: " .. transferred)
                 return transferred
             end
         end
     end
---    game.print("Transferred end: "..transferred)
+
+    --game.print("Transferred end: "..transferred)
     return transferred
 end
 
@@ -94,19 +100,14 @@ transfer_inventory = function(source, destination)
     end
 end
 
-take_product_stacks = function(inventory, products)
+take_entity_stack = function(inventory, entity)
     local insert = inventory.insert
     local to_spill = {}
-
-    if products then
-        for _, product in pairs(products) do
-            local stack = stack_from_product(product)
-            if stack then
-                local leftover = stack.count - insert(stack)
-                if leftover > 0 then
-                    to_spill[stack.name] = (to_spill[stack.name] or 0) + leftover
-                end
-            end
+    local stack = stack_from_product(entity)
+    if stack then
+        local leftover = stack.count - insert(stack)
+        if leftover > 0 then
+            to_spill[stack.name] = (to_spill[stack.name] or 0) + leftover
         end
     end
 end
@@ -133,9 +134,8 @@ get_build_item = function(entity, player)
     end
 
     for _, item in pairs(items) do
-        game.print("Looking in inventory for " .. item.name .. " with quality " .. quality.level)
-        if player.cheat_mode or player.get_item_count({ name = item.name, quality = quality }) >= item.count then
-            game.print("Found item " .. item.name)
+        if player.cheat_mode or player.get_item_count({ name = item.name, quality = quality }) >= item.count
+        then
             return item
         end
     end
@@ -173,12 +173,8 @@ rip_inventory = function(inventory, list)
     end
 end
 
-stack_from_product = function(product)
-    local count = floor(product.amount or (random() * (product.amount_max - product.amount_min) + product.amount_min))
-    if count < 1 then
-        return
-    end
-    local stack = { name = product.name, count = count }
+stack_from_product = function(entity)
+    local stack = { name = entity.name, count = 1, quality = entity.quality }
     return stack
 end
 
@@ -215,22 +211,7 @@ contents = function(entity)
 end
 
 search_drone_inventory = function(drone_inventory, item)
-    inspect_item_properties("searching for item in drone", item)
-    --game.print("searching in drone for "..item.name.. " with quality" ..item.quality)
-    for i = 1, #drone_inventory do
-        local stack = drone_inventory[i]
-        if stack and stack.valid_for_read then
-            local quality = stack.quality and stack.quality.level or "None"
-            game.print("Item: " .. stack.name .. ", Quality: " .. quality)
-        end
-    end
-
-    local item_count = drone_inventory.get_item_count({name = item.name, quality = item.quality})
-    if item_count == 0
-        then
-            game.print("No item found in drone inventory")
-    end
-    return item_count
+    return drone_inventory.get_item_count({name = item.name, quality = item.quality})
 end
 
 remove_from_inventory = function(inventory, item, count)

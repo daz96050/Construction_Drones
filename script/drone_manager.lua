@@ -24,7 +24,6 @@ make_path_request = function(drone_data, player, target)
 end
 
 make_player_drone = function(player)
-    game.print("Finding spawn position for drone")
     -- Find a spawn position close to the player.
     local position = player.surface.find_non_colliding_position(
             names.units.construction_drone,
@@ -41,7 +40,6 @@ make_player_drone = function(player)
     -- Remove a drone from the player's inventory.
     local removed = player.remove_item({ name = names.units.construction_drone, count = 1 })
     if removed == 0 then
-        game.print("Failed to remove drone from inventory")
         return
     end
 
@@ -71,7 +69,6 @@ set_drone_order = function(drone, drone_data)
     drone.ai_settings.do_separation = true
     data.drone_commands[drone.unit_number] = drone_data
     drone_data.entity = drone
-    game.print("processing drone command")
     return process_drone_command(drone_data)
 end
 

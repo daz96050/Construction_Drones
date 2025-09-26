@@ -13,8 +13,11 @@ check_ghost = function(entity, player)
     local count = 0
     local extra_targets = {}
     local extra
-    if entity.name == "tile-ghost" then extra = surface.find_entities_filtered { type = tile_ghost_type, position = position, radius = 3 }
-    else extra = surface.find_entities_filtered { ghost_name = entity.ghost_name, position = position, quality = entity.quality.name, radius = 5 }
+    if entity.name == "tile-ghost"
+    then
+        extra = surface.find_entities_filtered { type = tile_ghost_type, position = position, radius = 3 }
+    else
+        extra = surface.find_entities_filtered { ghost_name = entity.ghost_name, position = position, quality = entity.quality.name, radius = 5 }
     end
     for _, ghost in pairs(extra) do
         if count >= 8 then
@@ -65,7 +68,7 @@ check_upgrade = function(entity, player)
     local surface = entity.surface
 
     local item = get_build_item(entity, player)
-    if not item then game.print("no build item found") return end
+    if not item then --[[game.print("no build item found")]] return end
 
     local count = 0
 
@@ -90,7 +93,7 @@ check_upgrade = function(entity, player)
 
     local target = surface.get_closest(player.position, extra_targets)
     extra_targets[target.unit_number] = nil
-    game.print("Adding " .. count .. " to stack "..item.name .." with quality " .. upgrade_quality.level)
+    --game.print("Adding " .. count .. " to stack "..item.name .." with quality " .. upgrade_quality.level)
     item.quality = upgrade_quality
     local drone_data = {
         player = player,
@@ -101,8 +104,8 @@ check_upgrade = function(entity, player)
         upgrade_prototype = upgrade_prototype,
         item_to_place = item,
     }
-    inspect_item_properties("upgrade pickup", drone_data.pickup)
-    game.print("dispatching drone")
+    --inspect_item_properties("upgrade pickup", drone_data.pickup)
+    --game.print("dispatching drone")
     make_path_request(drone_data, player, target)
 end
 
@@ -344,24 +347,23 @@ check_job = function(player, job)
 end
 
 process_pickup_command = function(drone_data)
-    game.print("Processing pickup command")
+    --game.print("Processing pickup command")
 
     local player = drone_data.player
     if not (player and player.valid) then
-        game.print("Character for pickup was not valid")
         return cancel_drone_order(drone_data)
     end
 
-    if not move_to_player(drone_data, player) then
-        game.print("Could not move to player")
+    if not move_to_player(drone_data, player)
+    then
         return
     end
 
-    game.print("Pickup chest in range, picking up item")
+    --game.print("Pickup chest in range, picking up item")
 
     local stack = drone_data.pickup.stack
     local drone_inventory = get_drone_inventory(drone_data)
-    game.print("starting stack transfer to drone")
+    --game.print("starting stack transfer to drone")
 
     transfer_stack(drone_inventory, player, stack)
 
@@ -386,7 +388,8 @@ process_construct_command = function(drone_data)
     -- print("Processing construct command")
     local target = drone_data.target
     local item = drone_data.item_to_place
-    if not (target and target.valid and drone_data.item_place_count) then
+    if not (target and target.valid and drone_data.item_place_count)
+    then
         return cancel_drone_order(drone_data)
     end
 
@@ -440,7 +443,7 @@ process_construct_command = function(drone_data)
             })
         end
     end
-    remove_from_inventory(drone_inventory, drone_data.item_to_place, drone_data.item_place_count)
+    remove_from_inventory(drone_inventory, drone_data.item_to_place)
     update_drone_sticker(drone_data)
 
     drone_data.target = get_extra_target(drone_data)
@@ -618,32 +621,28 @@ process_repair_command = function(drone_data)
 end
 
 process_upgrade_command = function(drone_data)
-    game.print("Processing upgrade command")
+    --game.print("Processing upgrade command")
 
     local target = drone_data.target
-    inspect_item_properties("Item being placed", drone_data.item_to_place)
-    if not (target and target.valid and target.to_be_upgraded()) then
-        game.print("target not valid")
+    local item = drone_data.item_to_place
+    if not (target and target.valid and target.to_be_upgraded())
+    then
         return cancel_drone_order(drone_data)
     end
 
     local drone_inventory = get_drone_inventory(drone_data)
-    if search_drone_inventory(drone_inventory, drone_data.item_to_place) == 0 then
-        game.print("could not find item in drone inventory")
+    if search_drone_inventory(drone_inventory, item) == 0
+    then
         return cancel_drone_order(drone_data)
     end
 
     local drone = drone_data.entity
 
-    game.print("move to target")
-    if not move_to_order_target(drone_data, target) then
-        return
-    end
-
+    if not move_to_order_target(drone_data, target) then return end
+    local item_to_return = {name = target.name, quality = target.quality, health = target.health}
     local surface = drone.surface
     local prototype = drone_data.upgrade_prototype
     local direction = target.direction
-    local original_name = target.name
     local entity_type = target.type
     local index = unique_index(target)
     local neighbour = entity_type == "underground-belt" and target.neighbours
@@ -655,6 +654,7 @@ process_upgrade_command = function(drone_data)
         name = prototype.name,
         position = position,
         direction = direction,
+        quality = item.quality,
         fast_replace = true,
         force = target.force,
         spill = false,
@@ -664,12 +664,8 @@ process_upgrade_command = function(drone_data)
 
     data.already_targeted[index] = nil
     remove_from_inventory(drone_inventory, drone_data.item_to_place)
-
-    local inv = get_drone_inventory(drone_data)
-    local products = get_prototype(original_name).mineable_properties.products
-
-    take_product_stacks(inv, products)
-    if neighbour and neighbour.valid and search_drone_inventory(inv, drone_data.item_to_place) > 0 then
+    drone_inventory.insert(item_to_return)
+    if neighbour and neighbour.valid and search_drone_inventory(drone_inventory, drone_data.item_to_place) > 0 then
         -- print("Upgrading neighbour")
         local type = neighbour.type == "underground-belt" and neighbour.belt_to_ground_type
         local neighbour_index = unique_index(neighbour)
@@ -677,6 +673,7 @@ process_upgrade_command = function(drone_data)
             name = prototype.name,
             position = neighbour.position,
             direction = neighbour.direction,
+            move_stuck_players = true,
             fast_replace = true,
             force = neighbour.force,
             spill = false,
@@ -684,7 +681,7 @@ process_upgrade_command = function(drone_data)
             raise_built = true,
         }
         data.already_targeted[neighbour_index] = nil
-        take_product_stacks(drone_inventory, products)
+        take_entity_stack(drone_inventory, target)
         remove_from_inventory(drone_inventory, drone_data.item_to_place)
     end
 
@@ -700,7 +697,7 @@ process_upgrade_command = function(drone_data)
     local build_time = get_build_time()
     local orientation, offset = get_beam_orientation(working_drone.position, position)
     working_drone.orientation = orientation
-    working_drone.surface.create_entity {
+    working_drone.surface.create_entity { --render the beam
         name = beams.build,
         source = drone,
         target_position = position,
@@ -881,8 +878,6 @@ end
 
 local max = math.max
 process_drone_command = function(drone_data, result)
-    inspect_item_properties("drone pickup: ", drone_data.pickup)
-    inspect_item_properties("drone item to place: ", drone_data.item_to_place)
     local drone = drone_data.entity
     if not (drone and drone.valid) then
         return
@@ -895,47 +890,47 @@ process_drone_command = function(drone_data, result)
     end
 
     if (result == defines.behavior_result.fail) then
-         game.print("Fail")
+         --game.print("Fail")
         return process_failed_command(drone_data)
     end
 
     if drone_data.pickup then
-         game.print("Pickup")
+         --game.print("Pickup")
         return process_pickup_command(drone_data)
     end
 
     if drone_data.dropoff then
-         game.print("Dropoff")
+         --game.print("Dropoff")
         return process_dropoff_command(drone_data)
     end
 
     if drone_data.order == drone_orders.construct then
-         game.print("Construct")
+         --game.print("Construct")
         return process_construct_command(drone_data)
     end
 
     if drone_data.order == drone_orders.deconstruct then
-         game.print("Deconstruct")
+         --game.print("Deconstruct")
         return process_deconstruct_command(drone_data)
     end
 
     if drone_data.order == drone_orders.repair then
-         game.print("Repair")
+         --game.print("Repair")
         return process_repair_command(drone_data)
     end
 
     if drone_data.order == drone_orders.upgrade then
-         game.print("Upgrade")
+         --game.print("Upgrade")
         return process_upgrade_command(drone_data)
     end
 
     if drone_data.order == drone_orders.request_proxy then
-         game.print("Request proxy")
+         --game.print("Request proxy")
         return process_request_proxy_command(drone_data)
     end
 
     if drone_data.order == drone_orders.cliff_deconstruct then
-         game.print("Cliff Deconstruct")
+         --game.print("Cliff Deconstruct")
         return process_deconstruct_cliff_command(drone_data)
     end
 
