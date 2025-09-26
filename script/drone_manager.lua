@@ -263,9 +263,7 @@ update_drone_sticker = function(drone_data)
 
     local contents = inventory.get_contents()
 
-    if not next(contents) then
-        return
-    end
+    if not next(contents) then return end
 
     local number = table_size(contents)
 
@@ -278,11 +276,10 @@ update_drone_sticker = function(drone_data)
 
     insert(renderings, rendering.draw_sprite {
         sprite = "utility/entity_info_dark_background",
-        target = drone,
+        target = {entity = drone, offset = { 0, -0.5 }},
         surface = surface,
         forces = forces,
         only_in_alt_mode = true,
-        target_offset = { 0, -0.5 },
         x_scale = 0.5,
         y_scale = 0.5,
     })
@@ -290,15 +287,15 @@ update_drone_sticker = function(drone_data)
     if number == 1 then
         local attemptor = rendering.draw_sprite {
             sprite = "item/" .. contents[1].name,
-            target = drone,
+            target = {entity = drone, offset = { 0, -0.5 }},
             surface = surface,
             forces = forces,
             only_in_alt_mode = true,
-            target_offset = { 0, -0.5 },
             x_scale = 0.5,
             y_scale = 0.5,
         }
         insert(renderings, attemptor)
+        draw_quality_sticker(drone_data, renderings, contents[1].quality)
         return
     end
 
@@ -308,16 +305,33 @@ update_drone_sticker = function(drone_data)
         local offset = offsets[offset_index]
         insert(renderings, rendering.draw_sprite {
             sprite = "item/" .. item.name,
-            target = drone,
+            target = {entity = drone, offset = { -0.125 + offset[1], -0.5 + offset[2] }},
             surface = surface,
             forces = forces,
             only_in_alt_mode = true,
-            target_offset = { -0.125 + offset[1], -0.5 + offset[2] },
             x_scale = 0.25,
             y_scale = 0.25,
         })
         offset_index = offset_index + 1
     end
+end
+
+draw_quality_sticker = function(drone_data, renderings, quality)
+    local drone = drone_data.entity
+    local surface = drone.surface
+    local forces = { drone.force }
+
+    local attemptor = rendering.draw_sprite {
+        sprite = "quality/" .. quality,
+        target = {entity = drone, offset = { -0.25, 0.27 }},
+        surface = surface,
+        forces = forces,
+        only_in_alt_mode = true,
+        x_scale = 0.25,
+        y_scale = 0.25,
+    }
+    insert(renderings, attemptor)
+    return
 end
 
 cancel_player_drone_orders = function(player)
