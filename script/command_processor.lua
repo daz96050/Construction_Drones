@@ -267,7 +267,19 @@ end
 
 check_repair = function(entity, player)
     if not (entity and entity.valid) then return end
+
+    -- Respect player's allow_bot_repair setting
+    if not player.is_shortcut_toggled("drone-repair-toggle") then
+        return true -- Repairing disabled; skip
+    end
+
     if not should_process_entity(entity, player, drone_orders.repair) then return end
+
+    local force = entity.force
+    if not (force == player.force or player.force.get_friend(force)) then
+        return
+    end
+
     if (entity.get_health_ratio() or 1) >= 1 then return end -- Entity is fully repaired
 
     local index = unique_index(entity)
@@ -527,7 +539,6 @@ end
 process_repair_command = function(drone_data)
     -- print("Processing repair command")
     local target = drone_data.target
-    --TODO: Fix that drones are taking an entire stack of repair items
     if not (target and target.valid) then
         return cancel_drone_order(drone_data)
     end

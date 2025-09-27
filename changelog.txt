@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.0
+Date: 2025-09-26
+  Bugfix:
+    - Fix drones not respecting repair toggle, it was removed when the code was re-written
+    - Drones will no longer repair neutral entities (e.g. trees)
+---------------------------------------------------------------------------------------------------
 Version: 0.0.10
 Date: 2025-09-26
   Bugfix:
