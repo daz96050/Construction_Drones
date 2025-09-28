@@ -298,6 +298,12 @@ on_runtime_mod_setting_changed = function()
     setup_search_offsets(settings.global["throttling"].value)
 end
 
+on_player_left_game = function(event)
+    local player = game.get_player(event.player_index)
+    cancel_player_drone_orders(player)
+    data.job_queue[event.player_index] = nil
+end
+
 prune_commands = function()
     for unit_number, drone_data in pairs(data.drone_commands) do
         if not (drone_data.entity and drone_data.entity.valid) then
@@ -323,6 +329,10 @@ lib.events = {
     [defines.events.on_entity_died] = on_entity_removed,
 
     [defines.events.on_player_created] = on_player_created,
+    [defines.events.on_player_left_game] = on_player_left_game,
+    [defines.events.on_player_banned] = on_player_left_game,
+    [defines.events.on_player_kicked] = on_player_left_game,
+    [defines.events.on_pre_player_removed] = on_player_left_game,
 
     [defines.events.on_ai_command_completed] = on_ai_command_completed,
     [defines.events.on_entity_cloned] = on_entity_cloned,
