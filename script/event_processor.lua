@@ -11,13 +11,8 @@ remote.add_interface("construction_drone", {
 })
 
 scan_for_nearby_jobs = function(player, area)
-    -- game.print(serpent.line(area))
-    -- player.surface.create_entity{name = "tutorial-flying-text", position = {area[1][1], area[1][2]}, text = "["}
-    -- player.surface.create_entity{name = "tutorial-flying-text", position = {area[2][1], area[2][2]}, text = "]"}
     local job_queue = data.job_queue
-
     local player_index = player.index
-
     if not player.connected then
         job_queue[player_index] = nil
         return
@@ -27,13 +22,11 @@ scan_for_nearby_jobs = function(player, area)
         job_queue[player_index] = nil
         return
     end
-
-    local player_queue = job_queue[player.index]
+    local player_queue = job_queue[player_index]
     if not player_queue then
         player_queue = {}
         job_queue[player_index] = player_queue
     end
-
     local already_targeted = data.already_targeted
 
     local entities = player.surface.find_entities_filtered { area = area, type = ignored_types, invert = true }
@@ -41,11 +34,8 @@ scan_for_nearby_jobs = function(player, area)
     local unique_index = unique_index
     local check_entity = function(entity)
         local index = unique_index(entity)
-        if already_targeted[index] then
-            return
-        end
+        if already_targeted[index] then return end
         local name = entity.name
-        -- entity.surface.create_entity{name = "flying-text", position = entity.position, text = "!"}
         if name == "entity-ghost" or name == "tile-ghost" then
             player_queue[index] = { type = drone_orders.construct, entity = entity }
             return true
@@ -87,15 +77,9 @@ can_player_spawn_drones = function(player)
 end
 
 check_player_jobs = function(player)
-    if not can_player_spawn_drones(player) then
-        return
-    end
-
+    if not can_player_spawn_drones(player) then return end
     local queue = data.job_queue[player.index]
-    if not queue then
-        return
-    end
-
+    if not queue then return end
     local count = math.min(
             5,
             player.get_item_count(names.units.construction_drone) - (data.request_count[player.index] or 0)
@@ -103,10 +87,7 @@ check_player_jobs = function(player)
 
     for _ = 1, count do
         local index, job = next(queue)
-        if not index then
-            return
-        end
-
+        if not index then return end
         check_job(player, job)
         queue[index] = nil
     end
@@ -133,20 +114,14 @@ end
 
 check_search_queue = function()
     local index, search_data = next(data.search_queue)
-    if not index then
-        return
-    end
+    if not index then return end
     data.search_queue[index] = nil
     local player_index = search_data.player_index
     local player = game.get_player(player_index)
-    if not player then
-        return
-    end
-    local index = search_data.area_index
-    local area = search_offsets[index]
-    if not area then
-        return
-    end
+    if not player then return end
+    local area_index = search_data.area_index
+    local area = search_offsets[area_index]
+    if not area then return end
     local position = player.position
     local search_area = {
         { area[1][1] + position.x, area[1][2] + position.y },

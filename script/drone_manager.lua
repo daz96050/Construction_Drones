@@ -7,8 +7,7 @@ make_path_request = function(drone_data, player, target)
     local path_id = player.surface.request_path {
         bounding_box = prototype.collision_box,
         collision_mask = prototype.collision_mask,
-        start = player_physical_position(player), --TODO: Support bots being spawned in remote view
-        --TODO: When bots are spawned in remote view, if they are on a different surface, don't try to path back to the player, but just immediately return instead
+        start = player_physical_position(player),
         goal = target.position,
         force = player.force,
         radius = target.get_radius() + 4,
@@ -74,9 +73,7 @@ end
 
 find_a_player = function(drone_data)
     local drone = drone_data.entity
-    if not (drone and drone.valid) then
-        return
-    end
+    if not (drone and drone.valid) then return end
 
     -- Ensure the drone always targets the player who spawned it.
     local original_player = drone_data.player
