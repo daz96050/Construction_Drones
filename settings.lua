@@ -35,4 +35,36 @@ data:extend({
         default_value = false,
         order = "d",
     },
+    {
+        type = "int-setting",
+        name = "construction-drone-search-radius",
+        setting_type = "runtime-global",  -- Global setting for search radius
+        default_value = 60,
+        minimum_value = 10,
+        maximum_value = 200,
+        order = "a"
+    },
+    {
+        type = "int-setting",
+        name = "construction-drone-search-refresh",
+        setting_type = "runtime-global",  -- Global setting for refresh interval
+        default_value = 16,
+        minimum_value = 1,
+        maximum_value = 1000,
+        order = "b"
+    },
+    {
+        type = "bool-setting",
+        name = "force-player-position-search",
+        setting_type = "runtime-global",
+        default_value = false,
+        order = "c"
+    },
+    {
+        type = "bool-setting",
+        name = "remote-view-spawn",
+        setting_type = "runtime-global",
+        default_value = false,
+        order = "c"
+    }
 })

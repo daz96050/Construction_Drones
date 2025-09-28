@@ -18,6 +18,23 @@ remote.add_interface("construction_drone", {
     end
 })
 
+local function compute_search_offsets(div)
+    local radius = settings.global["construction-drone-search-radius"].value or 60
+    local r = radius / div
+    local offsets = {}
+    for y = -div, div - 1 do
+        for x = -div, div - 1 do
+            local area = { { x * r, y * r }, { (x + 1) * r, (y + 1) * r } }
+            table.insert(offsets, area)
+        end
+    end
+    -- Sort by distance for spiral search order
+    table.sort(offsets, function(a, b)
+        return distance(a[1], { 0, 0 }) < distance(b[1], { 0, 0 })
+    end)
+    return offsets
+end
+
 scan_for_nearby_jobs = function(player, area)
     local job_queue = data.job_queue
     local player_index = player.index
@@ -102,22 +119,8 @@ check_player_jobs = function(player)
 end
 
 setup_search_offsets = function(div)
-    local r = 60 / div
-
-    search_offsets = {}
-
-    for y = -div, div - 1 do
-        for x = -div, div - 1 do
-            local area = { { x * r, y * r }, { (x + 1) * r, (y + 1) * r } }
-            table.insert(search_offsets, area)
-        end
-    end
-
-    -- Use distance instead of global distance
-    table.sort(search_offsets, function(a, b)
-        return distance(a[1], { 0, 0 }) < distance(b[1], { 0, 0 })
-    end)
-    search_refresh = #search_offsets
+    search_offsets = compute_search_offsets(div)
+    search_refresh = math.max(#search_offsets, 1)
 end
 
 check_search_queue = function()
@@ -130,7 +133,13 @@ check_search_queue = function()
     local area_index = search_data.area_index
     local area = search_offsets[area_index]
     if not area then return end
+    local force_player_position = settings.global["force-player-position-search"].value
     local position = player.position
+    -- Use player.physical_position to center search on player's physical location, not remote view
+    if force_player_position then
+         position = getPlayerPosition(player)
+    else position = player.position
+    end
     local search_area = {
         { area[1][1] + position.x, area[1][2] + position.y },
         { area[2][1] + position.x, area[2][2] + position.y },
@@ -138,11 +147,13 @@ check_search_queue = function()
     scan_for_nearby_jobs(player, search_area)
 end
 
-schedule_new_searches = function()
+schedule_new_searches = function(event_tick)
     local queue = data.search_queue
-    if next(queue) then
-        return
+    if next(queue) then return end
+    if search_refresh == nil then
+        setup_search_offsets(settings.global["throttling"].value or 1)
     end
+    if event_tick % search_refresh ~= 0 then return end
 
     for k, player in pairs(game.connected_players) do
         local index = player.index
@@ -161,9 +172,7 @@ on_tick = function(event)
         check_player_jobs(player)
     end
 
-    if event.tick % search_refresh == 0 then
-        schedule_new_searches()
-    end
+    schedule_new_searches(event.tick)
 end
 
 on_ai_command_completed = function(event)
@@ -302,8 +311,10 @@ on_lua_shortcut = function(event)
     end
 end
 
-on_runtime_mod_setting_changed = function()
-    setup_search_offsets(settings.global["throttling"].value)
+on_runtime_mod_setting_changed = function(event)
+    if event and (event.setting == "throttling" or event.setting == "construction-drone-search-radius" or event.setting == "construction-drone-search-refresh") then
+        setup_search_offsets(settings.global["throttling"].value)
+    end
 end
 
 on_player_left_game = function(event)
@@ -382,8 +393,7 @@ lib.on_init = function()
             player_settings["drone_process_other_player_proxies"] = { value = false }
         end
     end
-
-    on_runtime_mod_setting_changed()
+    setup_search_offsets(settings.global["throttling"].value or 1)
 end
 
 lib.on_configuration_changed = function()
@@ -415,6 +425,7 @@ lib.on_configuration_changed = function()
     data.search_queue = data.search_queue or {}
     data.job_queue = data.job_queue or {}
     data.already_targeted = data.already_targeted or {}
+    setup_search_offsets(settings.global["throttling"].value or 1)  -- Recompute offsets with global settings
 end
 
 return lib

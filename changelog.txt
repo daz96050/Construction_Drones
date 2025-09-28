@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.1
+Date: 2025-09-27
+  Feature:
+    - Drone search radius limit
+    - Global setting to enable drones from deploying from remote view location.
+  Bugfix:
+    - Fix drones not performing jobs when remote view is open
+---------------------------------------------------------------------------------------------------
 Version: 0.1.0
 Date: 2025-09-26
   Bugfix:
