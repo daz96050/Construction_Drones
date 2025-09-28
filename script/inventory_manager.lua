@@ -1,3 +1,4 @@
+local logs = require("logs")
 get_proxy_chest = function(drone)
     local index = drone.unit_number
     local proxy_chest = data.proxy_chests[index]
@@ -45,6 +46,7 @@ transfer_stack = function(destination, source_entity, stack)
         available_items = source_entity.get_item_count(stack.name)
     end
     -- Respect the requested stack count, but cap at available items
+    logs.trace("Available Items: " ..serpent.block(available_items))
     stack.count = math.min(stack.count, available_items)
     if stack.count == 0 then
         return 0
@@ -55,18 +57,23 @@ transfer_stack = function(destination, source_entity, stack)
     for _, inventory in pairs(inventories(source_entity)) do
         while stack.count > 0 do
             local source_stack = inventory.find_item_stack({ name = stack.name, quality = stack.quality })
+            logs.trace("source stack: " .. serpent.block(source_stack))
             if source_stack and source_stack.valid and source_stack.valid_for_read then
                 local transfer_count = math.min(stack.count, source_stack.count)
                 local to_transfer = { name = source_stack.name, count = transfer_count, quality = source_stack.quality }
+                logs.trace("to transfer: " .. serpent.block(to_transfer))
                 if can_insert(to_transfer) then
                     local inserted = insert(to_transfer)
+                    logs.trace("inserted" .. inserted .. " of " .. source_stack.name .. " into inventory")
                     transferred = transferred + inserted
                     stack.count = stack.count - inserted
                     inventory.remove({ name = source_stack.name, count = inserted, quality = source_stack.quality })
+                    logs.trace("removed " .. inserted .. "from source")
                 else break end
             else break end
         end
     end
+    logs.debug("Transferred: " ..transferred.." items to destination")
     return transferred
 end
 

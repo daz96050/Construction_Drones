@@ -23,8 +23,17 @@ get_prototype = function(name)
     return prototype
 end
 
-player_physical_position = function(player)
-    if player.controller_type == 7 then -- remote map view
+getPlayerSurface = function(player)
+    if player.controller_type == defines.controllers.remote then -- remote map view
+        return player.physical_surface
+    else
+        return player.surface
+    end
+end
+
+
+getPlayerPosition = function(player)
+    if player.controller_type == defines.controllers.remote then -- remote map view
         return player.physical_position
     else
         return player.position
@@ -55,7 +64,7 @@ end
 should_process_entity = function(entity, player, order_type)
     if not (entity and entity.valid and player and player.valid) then return false end
     if player.force.name ~= entity.force.name and entity.force.name ~= "neutral" then return false end
-    local player_surface = player_physical_position(player).surface or player.surface
+    local player_surface = getPlayerPosition(player).surface or player.surface
     if player_surface ~= entity.surface then return false end -- Ensure entity is on player's physical surface
 
     -- Map drone order type to the corresponding setting
@@ -201,4 +210,9 @@ inspect_item_properties = function(inspection, item)
             game.print(key .. ": " .. tostring(value))
         end
     end
+end
+
+console = function(string)
+    game.print(string)
+    log(string)
 end

@@ -1,13 +1,21 @@
+local logs = require("logs")
 local insert = table.insert
 
 -- RPC
 remote.add_interface("construction_drone", {
-    set_debug = function(bool)
+    debug = function(bool)
         data.debug = bool
+        debug_enabled = bool
     end,
     dump = function()
-        -- print(serpent.block(data))
+         log(serpent.block(data))
     end,
+    trace = function(bool)
+        trace_enabled = bool
+    end,
+    console = function(bool)
+        use_console = bool
+    end
 })
 
 scan_for_nearby_jobs = function(player, area)
@@ -257,7 +265,7 @@ on_script_path_request_finished = function(event)
 
     local drone = make_player_drone(player)
     if not drone then
-        --game.print("Could not create drone")
+        logs.debug("Could not create drone")
         clear_target(drone_data)
         clear_extra_targets(drone_data)
         return

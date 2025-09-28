@@ -1,5 +1,8 @@
 beams = names.beams
 proxy_name = names.entities.construction_drone_proxy_chest
+trace_enabled = false
+debug_enabled = false
+use_console = false
 
 drone_prototypes = { [names.units.construction_drone] = { interact_range = 5, return_to_character_range = -1 } }
 
@@ -86,3 +89,5 @@ directions = {
     [defines.direction.west] = { -1, 0 },
     [defines.direction.northwest] = { -1, -1 },
 }
+
+log_separator = "----------------------------"

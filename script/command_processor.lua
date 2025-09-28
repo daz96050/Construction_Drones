@@ -1,3 +1,4 @@
+local logs = require("logs")
 local random = math.random
 check_ghost = function(entity, player)
     if not (entity and entity.valid) then return end
@@ -335,27 +336,32 @@ check_job = function(player, job)
 end
 
 process_pickup_command = function(drone_data)
-    --game.print("Processing pickup command")
+    logs.debug("Processing pickup command")
 
     local player = drone_data.player
     if not (player and player.valid) then
         return cancel_drone_order(drone_data)
     end
 
-    if not move_to_player(drone_data, player) then return end
+    if not move_to_player(drone_data, player) then
+        logs.debug("cannot move to player, ending pickup command")
+        return
+    end
 
-    --game.print("Pickup chest in range, picking up item")
+    logs.debug("Within acceptable distance to player, picking up item")
 
     local stack = drone_data.pickup.stack
+    logs.trace("Picking up stack: " ..serpent.block(stack))
     local drone_inventory = get_drone_inventory(drone_data)
-    --game.print("starting stack transfer to drone")
+    logs.debug("starting stack transfer to drone")
 
-    transfer_stack(drone_inventory, player, stack)
+    transfer_stack(drone_inventory, player.character, stack)
+
 
     update_drone_sticker(drone_data)
-
+    logs.debug("pickup completed")
     drone_data.pickup = nil
-
+    logs.debug(log_separator)
     return process_drone_command(drone_data)
 end
 
@@ -370,24 +376,31 @@ process_dropoff_command = function(drone_data)
 end
 
 process_construct_command = function(drone_data)
-    -- print("Processing construct command")
+    logs.debug("Processing construct command")
     local target = drone_data.target
     local item = drone_data.item_to_place
     if not (target and target.valid and drone_data.item_place_count)
     then
+        logs.debug("target is not valid")
         return cancel_drone_order(drone_data)
     end
+    logs.debug("drone needs to place " ..drone_data.item_place_count .. " of item " ..item.name)
 
     local drone_inventory = get_drone_inventory(drone_data)
-    if search_drone_inventory(drone_inventory, item) < drone_data.item_place_count then
+    local inventory_count = search_drone_inventory(drone_inventory, item)
+    logs.debug("drone contains "..inventory_count)
+    if inventory_count < drone_data.item_place_count then
+        logs.debug("drone does not have enough items to construct ghost")
         return cancel_drone_order(drone_data)
     end
 
     if target.ghost_name ~= drone_data.entity_ghost_name and target.quality ~= item.quality then
+        logs.debug("target doesn't match name and quality")
         return cancel_drone_order(drone_data) -- entity got upgraded?
     end
 
     if not move_to_order_target(drone_data, target) then
+        logs.debug("could not move to target for construction")
         return
     end
 
@@ -432,7 +445,6 @@ process_construct_command = function(drone_data)
     update_drone_sticker(drone_data)
 
     drone_data.target = get_extra_target(drone_data)
-
     local build_time = get_build_time()
     local orientation, offset = get_beam_orientation(drone.position, position)
     drone.orientation = orientation
@@ -828,11 +840,11 @@ end
 
 process_return_to_player_command = function(drone_data, force)
     local player = drone_data.player
-    if not (player and player.valid) then
+    if not (player and player.valid) then --does the player exist
         return cancel_drone_order(drone_data)
     end
 
-    if not (force or move_to_player(drone_data, player)) then return end
+    if not (force or move_to_player(drone_data, player)) then return end -- attempt to move to the player
 
     local inventory = get_drone_inventory(drone_data)
     transfer_inventory(inventory, player)
@@ -863,9 +875,7 @@ end
 
 process_drone_command = function(drone_data, result)
     local drone = drone_data.entity
-    if not (drone and drone.valid) then
-        return
-    end
+    if not (drone and drone.valid) then return end
 
     drone.speed = 0.2
 
@@ -875,51 +885,53 @@ process_drone_command = function(drone_data, result)
     end
 
     if drone_data.pickup then
-         --game.print("Pickup")
+         logs.debug("Pickup")
         return process_pickup_command(drone_data)
     end
 
     if drone_data.dropoff then
-         --game.print("Dropoff")
+         logs.debug("Dropoff")
         return process_dropoff_command(drone_data)
     end
 
     if drone_data.order == drone_orders.construct then
-         --game.print("Construct")
+         logs.debug("Construct")
         return process_construct_command(drone_data)
     end
 
     if drone_data.order == drone_orders.deconstruct then
-         --game.print("Deconstruct")
+         logs.debug("Deconstruct")
         return process_deconstruct_command(drone_data)
     end
 
     if drone_data.order == drone_orders.repair then
-         --game.print("Repair")
+         logs.debug("Repair")
         return process_repair_command(drone_data)
     end
 
     if drone_data.order == drone_orders.upgrade then
-         --game.print("Upgrade")
+         logs.debug("Upgrade")
         return process_upgrade_command(drone_data)
     end
 
     if drone_data.order == drone_orders.request_proxy then
-         --game.print("Request proxy")
+         logs.debug("Request proxy")
         return process_request_proxy_command(drone_data)
     end
 
     if drone_data.order == drone_orders.cliff_deconstruct then
-         --game.print("Cliff Deconstruct")
+         logs.debug("Cliff Deconstruct")
         return process_deconstruct_cliff_command(drone_data)
     end
 
+    logs.debug("No matching drone orders found in drone data")
+    logs.debug("No matching drone orders found in drone data: " .. serpent.block(drone_data))
     find_a_player(drone_data)
 
     if drone_data.player then
         return process_return_to_player_command(drone_data)
     end
 
-    -- game.print("Nothin")
+    logs.debug("no tasks to perform, and no player connected to drone")
     return set_drone_idle(drone)
 end

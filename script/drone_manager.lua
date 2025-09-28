@@ -1,13 +1,14 @@
+local logs = require("logs")
 local random = math.random
 local insert = table.insert
 
 make_path_request = function(drone_data, player, target)
     local prototype = get_prototype(names.units.construction_drone)
 
-    local path_id = player.surface.request_path {
+    local path_id = player.physical_surface.request_path {
         bounding_box = prototype.collision_box,
         collision_mask = prototype.collision_mask,
-        start = player_physical_position(player),
+        start = getPlayerPosition(player),
         goal = target.position,
         force = player.force,
         radius = target.get_radius() + 4,
@@ -23,27 +24,31 @@ make_path_request = function(drone_data, player, target)
 end
 
 make_player_drone = function(player)
+    local player_surface = getPlayerSurface(player)
     -- Find a spawn position close to the player.
-    local position = player.surface.find_non_colliding_position(
+    local position = player_surface.find_non_colliding_position(
             names.units.construction_drone,
-            player_physical_position(player),
+            getPlayerPosition(player),
             5,
             0.5,
             false
     )
 
     if not position then
+        logs.debug("Could not find spawn position for drone")
         return
     end
+
 
     -- Remove a drone from the player's inventory.
     local removed = player.remove_item({ name = names.units.construction_drone, count = 1 })
     if removed == 0 then
+        logs.debug("could not remove drone from player inventory")
         return
     end
 
     -- Create the drone entity.
-    local drone = player.surface.create_entity {
+    local drone = player_surface.create_entity {
         name = names.units.construction_drone,
         position = position,
         force = player.force,
@@ -158,6 +163,7 @@ clear_target = function(drone_data)
 end
 
 cancel_drone_order = function(drone_data, on_removed)
+    logs.debug("Cancelling drone order")
     local drone = drone_data.entity
     if not (drone and drone.valid) then
         return
@@ -194,14 +200,17 @@ cancel_drone_order = function(drone_data, on_removed)
 end
 
 move_to_order_target = function(drone_data, target)
+    logs.debug("attempting to move to target")
     local drone = drone_data.entity
 
     if drone.surface ~= target.surface then
+        logs.debug("Drone is on a different surface, task cancelled")
         cancel_drone_order(drone_data)
         return
     end
 
     if in_construction_range(drone, target) then
+        logs.debug("Drone is in construction range")
         return true
     end
 
@@ -217,24 +226,29 @@ end
 
 move_to_player = function(drone_data, player)
     local drone = drone_data.entity
+    logs.debug("attempting to move to player")
 
-    if drone.surface ~= player.surface then
+    if drone.surface ~= getPlayerSurface(player) then --if the player is on a different surface, stop trying to do anything
         cancel_drone_order(drone_data)
-        return
+        logs.debug("Drone is on a different surface, cannot move to player")
+        return -- tell the caller you can't get to the player
+    end
+    local player_position = getPlayerPosition(player)
+    if distance(drone.position, player_position) < 2 then
+        logs.debug("drone distance is < 2 from player")
+        return true -- tell the caller you're already at the player
     end
 
-    if distance(drone.position, player.position) < 2 then
-        return true
-    end
-
+    logs.debug("Sending drone to player physical position")
     drone.commandable.set_command {
         type = defines.command.go_to_location,
         destination_entity = player.character or nil,
-        destination = (not player.character and player.position) or nil,
+        destination = (not player.character and player_position) or nil,
         radius = 0,
         distraction = defines.distraction.none,
         pathfind_flags = drone_pathfind_flags,
     }
+    logs.debug(log_separator)
 end
 
 --Modify the alt-image of the item the drone is carrying on the drone
