@@ -24,11 +24,21 @@ make_path_request = function(drone_data, player, target)
 end
 
 make_player_drone = function(player)
-    local player_surface = getPlayerSurface(player)
+    local player_position
+    if not settings.global["remote-view-spawn"].value and (player.controller_type == defines.controllers.remote) then
+        -- Fallback to physical_position in remote view if remote-view-spawn is disabled
+        logs.debug("returning physical location due to remote view")
+        player_position = player.physical_position
+    else
+        -- Default to player.position (could be remote view)
+        player_position = player.position
+    end
+    local player_surface = player.physical_surface
+
     -- Find a spawn position close to the player.
     local position = player_surface.find_non_colliding_position(
             names.units.construction_drone,
-            getPlayerPosition(player),
+            player_position,
             5,
             0.5,
             false
@@ -38,7 +48,6 @@ make_player_drone = function(player)
         logs.debug("Could not find spawn position for drone")
         return
     end
-
 
     -- Remove a drone from the player's inventory.
     local removed = player.remove_item({ name = names.units.construction_drone, count = 1 })
@@ -82,7 +91,7 @@ find_a_player = function(drone_data)
 
     -- Ensure the drone always targets the player who spawned it.
     local original_player = drone_data.player
-    if original_player and original_player.valid and original_player.surface == drone.surface then
+    if original_player and original_player.valid and original_player.physical_surface == drone.surface then
         return true
     end
 

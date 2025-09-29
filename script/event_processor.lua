@@ -54,7 +54,7 @@ scan_for_nearby_jobs = function(player, area)
     end
     local already_targeted = data.already_targeted
 
-    local entities = player.surface.find_entities_filtered { area = area, type = ignored_types, invert = true }
+    local entities = player.physical_surface.find_entities_filtered { area = area, type = ignored_types, invert = true }
 
     local unique_index = unique_index
     local check_entity = function(entity)
@@ -134,16 +134,21 @@ check_search_queue = function()
     local area = search_offsets[area_index]
     if not area then return end
     local force_player_position = settings.global["force-player-position-search"].value
-    local position = player.position
-    -- Use player.physical_position to center search on player's physical location, not remote view
+    local position
     if force_player_position then
-         position = getPlayerPosition(player)
-    else position = player.position
+        -- Use physical_position to clamp search area to player's character location, not remote view
+        logs.debug("forcing player position search")
+        position = player.physical_position
+    else
+        -- Use position for remote view or default player position
+        position = player.position
     end
+    -- Define search area centered on the chosen position
     local search_area = {
         { area[1][1] + position.x, area[1][2] + position.y },
         { area[2][1] + position.x, area[2][2] + position.y },
     }
+    -- Scan for jobs in the defined search area
     scan_for_nearby_jobs(player, search_area)
 end
 
@@ -251,9 +256,7 @@ end
 
 on_script_path_request_finished = function(event)
     local drone_data = data.path_requests[event.id]
-    if not drone_data then
-        return
-    end
+    if not drone_data then return end
     data.path_requests[event.id] = nil
 
     local player = drone_data.player
@@ -312,7 +315,7 @@ on_lua_shortcut = function(event)
 end
 
 on_runtime_mod_setting_changed = function(event)
-    if event and (event.setting == "throttling" or event.setting == "construction-drone-search-radius" or event.setting == "construction-drone-search-refresh") then
+    if event and (event.setting == "throttling" or event.setting == "construction-drone-search-radius" or event.setting == "force-player-position-search") then
         setup_search_offsets(settings.global["throttling"].value)
     end
 end

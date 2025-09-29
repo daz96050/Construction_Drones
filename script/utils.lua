@@ -1,3 +1,4 @@
+local logs = require("logs")
 local sin, cos = math.sin, math.cos
 local angle = util.angle
 local floor = math.floor
@@ -33,7 +34,8 @@ end
 
 
 getPlayerPosition = function(player)
-    if player.controller_type == defines.controllers.remote then -- remote map view
+    if not settings.global["remote-view-spawn"].value and (player.controller_type == defines.controllers.remote) then -- remote map view
+        logs.debug("returning physical location")
         return player.physical_position
     else
         return player.position
@@ -64,7 +66,7 @@ end
 should_process_entity = function(entity, player, order_type)
     if not (entity and entity.valid and player and player.valid) then return false end
     if player.force.name ~= entity.force.name and entity.force.name ~= "neutral" then return false end
-    local player_surface = getPlayerPosition(player).surface or player.surface
+    local player_surface = player.physical_surface
     if player_surface ~= entity.surface then return false end -- Ensure entity is on player's physical surface
 
     -- Map drone order type to the corresponding setting

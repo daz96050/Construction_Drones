@@ -168,28 +168,16 @@ check_cliff_deconstruction = function(entity, player)
 end
 
 check_deconstruction = function(entity, player)
-    if not (entity and entity.valid) then
-        return
-    end
-
-    if not should_process_entity(entity, player, drone_orders.deconstruct) then
-        return
-    end
-
-    if not entity.to_be_deconstructed() then
-        return
-    end
+    if not (entity and entity.valid) then return end
+    if not should_process_entity(entity, player, drone_orders.deconstruct) then return end
+    if not entity.to_be_deconstructed() then return end
 
     local index = unique_index(entity)
-    if data.already_targeted[index] then
-        return
-    end
+    if data.already_targeted[index] then return end
 
     local force = player.force
 
-    if not (entity.force == force or entity.force.name == "neutral" or entity.force.get_friend(force)) then
-        return
-    end
+    if not (entity.force == force or entity.force.name == "neutral" or entity.force.get_friend(force)) then return end
 
     if entity.type == cliff_type then
         return check_cliff_deconstruction(entity, player)
@@ -847,7 +835,7 @@ process_return_to_player_command = function(drone_data, force)
     if not (force or move_to_player(drone_data, player)) then return end -- attempt to move to the player
 
     local inventory = get_drone_inventory(drone_data)
-    transfer_inventory(inventory, player)
+    transfer_inventory(inventory, player.character)
 
     if not inventory.is_empty() then
         drone_wait(drone_data, random(18, 24))
