@@ -10,3 +10,6 @@ game.speed = 2
 game.map_settings.pollution.enabled = false
 game.player.clear_items_inside()
 game.player.surface.always_day=true
+remote.call("construction_drone", "debug", true)
+remote.call("construction_drone", "trace", true)
+remote.call("construction_drone", "console", true)
