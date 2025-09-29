@@ -331,13 +331,6 @@ process_pickup_command = function(drone_data)
         return cancel_drone_order(drone_data)
     end
 
-    if not move_to_player(drone_data, player) then
-        logs.debug("cannot move to player, ending pickup command")
-        return
-    end
-
-    logs.debug("Within acceptable distance to player, picking up item")
-
     local stack = drone_data.pickup.stack
     logs.trace("Picking up stack: " ..serpent.block(stack))
     local drone_inventory = get_drone_inventory(drone_data)
@@ -842,7 +835,8 @@ process_return_to_player_command = function(drone_data, force)
         return
     end
 
-    if player.insert({ name = names.units.construction_drone, count = 1 }) == 0 then
+    if player.character.insert({ name = names.units.construction_drone, count = 1 }) == 0 then
+        logs.debug("Could not insert drone to player character inventory, waiting")
         drone_wait(drone_data, random(18, 24)) --If the drone didn't get inserted into the players inventory, wait & follow the player until it does
         return
     end
