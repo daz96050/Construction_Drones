@@ -1,9 +1,10 @@
 ---------------------------------------------------------------------------------------------------
-Version: 0.1.1
+Version: 0.1.3
 Date: 2025-09-27
   Feature:
     - Drone search radius limit
     - Global setting to enable drones from deploying from remote view location.
+    - Global setting to force job searches only near the player
   Bugfix:
     - Fix drones not performing jobs when remote view is open
 ---------------------------------------------------------------------------------------------------
