@@ -50,7 +50,7 @@ make_player_drone = function(player)
     end
 
     -- Remove a drone from the player's inventory.
-    local removed = player.remove_item({ name = names.units.construction_drone, count = 1 })
+    local removed = player.character.remove_item({ name = names.units.construction_drone, count = 1 })
     if removed == 0 then
         logs.debug("could not remove drone from player inventory")
         return
@@ -242,8 +242,7 @@ move_to_player = function(drone_data, player)
         logs.debug("Drone is on a different surface, cannot move to player")
         return -- tell the caller you can't get to the player
     end
-    local player_position = getPlayerPosition(player)
-    if distance(drone.position, player_position) < 2 then
+    if distance(drone.position, player.physical_position) < 2 then
         logs.debug("drone distance is < 2 from player")
         return true -- tell the caller you're already at the player
     end
