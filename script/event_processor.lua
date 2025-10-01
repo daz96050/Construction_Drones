@@ -137,7 +137,6 @@ check_search_queue = function()
     local position
     if force_player_position then
         -- Use physical_position to clamp search area to player's character location, not remote view
-        logs.trace("forcing player position search")
         position = player.physical_position
     else
         -- Use position for remote view or default player position

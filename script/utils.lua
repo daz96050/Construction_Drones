@@ -19,6 +19,7 @@ get_prototype = function(name)
     if prototype_cache[name] then
         return prototype_cache[name]
     end
+    logs.trace("searching for prototype by name:" .. name)
     local prototype = prototypes.entity[name]
     prototype_cache[name] = prototype
     return prototype
@@ -196,6 +197,31 @@ get_extra_target = function(drone_data)
         drone_data.target = next_target
         drone_data.extra_targets[unique_index(next_target)] = nil
         return next_target
+    end
+end
+
+has_flag = function(entity, tag_name)
+    -- Validate the entity
+    if not (entity and entity.valid) then
+        return false -- Entity is invalid or nil, so no tags exist
+    end
+
+    -- Get the tags table from the entity
+    -- LuaEntity.tags returns a table of key-value pairs or nil if no tags are set
+    local flags = entity.flags
+    if not flags then
+        return false -- No tags table exists, so the tag doesn't exist
+    end
+
+    -- Check if the tag exists in the tags table
+    -- tags[tag_name] will be nil if the tag doesn't exist, or its value if it does
+    return flags[tag_name] ~= nil
+end
+
+get_entity_flag = function(entity, tag_name)
+    if has_flag(entity, tag_name) then
+        return entity.flags[tag_name]
+        else return nil
     end
 end
 

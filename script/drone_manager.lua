@@ -4,6 +4,7 @@ local insert = table.insert
 
 make_path_request = function(drone_data, player, target)
     local prototype = get_prototype(names.units.construction_drone)
+    logs.trace("Prototype for path request: " .. serpent.block(prototype))
 
     local path_id = player.physical_surface.request_path {
         bounding_box = prototype.collision_box,
@@ -251,7 +252,7 @@ move_to_player = function(drone_data, player)
     drone.commandable.set_command {
         type = defines.command.go_to_location,
         destination_entity = player.character or nil,
-        destination = (not player.character and player_position) or nil,
+        destination = (not player.character and player.physical_position) or nil,
         radius = 0,
         distraction = defines.distraction.none,
         pathfind_flags = drone_pathfind_flags,

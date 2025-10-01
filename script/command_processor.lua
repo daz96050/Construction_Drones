@@ -263,7 +263,7 @@ check_repair = function(entity, player)
     end
 
     if not should_process_entity(entity, player, drone_orders.repair) then return end
-
+    if entity.has_flag("not-repairable") then return end
     local force = entity.force
     if not (force == player.force or player.force.get_friend(force)) then
         return
