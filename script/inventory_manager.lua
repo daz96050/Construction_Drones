@@ -95,6 +95,7 @@ end
 take_entity_stack = function(inventory, entity)
     local insert = inventory.insert
     local to_spill = {}
+    if entity.name == "entity-ghost" then return end
     local stack = stack_from_product(entity)
     if stack then
         local leftover = stack.count - insert(stack)
