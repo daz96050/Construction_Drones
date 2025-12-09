@@ -64,11 +64,11 @@ transfer_stack = function(destination, source_entity, stack)
                 logs.trace("to transfer: " .. serpent.block(to_transfer))
                 if can_insert(to_transfer) then
                     local inserted = insert(to_transfer)
-                    logs.trace("inserted" .. inserted .. " of " .. source_stack.name .. " into inventory")
+                    logs.trace("inserted " .. inserted .. " of " .. source_stack.name .. " into inventory")
                     transferred = transferred + inserted
                     stack.count = stack.count - inserted
                     inventory.remove({ name = source_stack.name, count = inserted, quality = source_stack.quality })
-                    logs.trace("removed " .. inserted .. "from source")
+                    logs.trace("removed " .. inserted .. " from source")
                 else break end
             else break end
         end
@@ -129,6 +129,8 @@ get_build_item = function(entity, player)
     for _, item in pairs(items) do
         if player.cheat_mode or player.get_item_count({ name = item.name, quality = quality }) >= item.count
         then
+            item.quality = quality
+            logs.trace("found build item: " ..serpent.block(item))
             return item
         end
     end

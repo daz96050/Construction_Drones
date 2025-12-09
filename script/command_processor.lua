@@ -641,6 +641,7 @@ process_upgrade_command = function(drone_data)
 
     data.already_targeted[index] = nil
     remove_from_inventory(drone_inventory, drone_data.item_to_place)
+    logs.debug("Inserting item to drone inventory: " .. serpent.block(item_to_return))
     drone_inventory.insert(item_to_return)
     if neighbour and neighbour.valid and search_drone_inventory(drone_inventory, drone_data.item_to_place) > 0 then
         -- print("Upgrading neighbour")

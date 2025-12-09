@@ -2,10 +2,9 @@
 
 # Get current directory as mod folder
 $modPath = $PSScriptRoot
-$modFolderName = "Construction_Drones_Forked"
 $infoJsonPath = Join-Path -Path $modPath -ChildPath "info.json"
 $factorioModsPath = Join-Path -Path $env:APPDATA -ChildPath "Factorio\mods"
-$tempDir = Join-Path -Path $PSScriptRoot -ChildPath "temp_$modFolderName"
+
 
 # Load .NET assembly for zip creation
 Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -31,8 +30,9 @@ if (-not (Test-Path -Path $infoJsonPath)) {
 }
 
 try {
-    $infoJson = Get-Content -Path $infoJsonPath -Raw | ConvertFrom-Json
-    $version = $infoJson.version
+    $info = Get-Content -Path $infoJsonPath -Raw | ConvertFrom-Json
+    $version = $info.version
+    $modName = $info.name
     if (-not $version) {
         Write-Error "Version field not found in info.json."
         exit 1
@@ -41,9 +41,9 @@ try {
     Write-Error "Failed to parse info.json: $_"
     exit 1
 }
-
+$tempDir = Join-Path -Path $PSScriptRoot -ChildPath "temp_$modName"
 # Define zip file name and path
-$zipName = "${modFolderName}_${version}.zip"
+$zipName = "${modName}_${version}.zip"
 $zipPath = Join-Path -Path $PSScriptRoot -ChildPath $zipName
 
 # Create temporary subdirectory for zip structure
@@ -59,10 +59,10 @@ if (Test-Path -Path $tempDir) {
 
 try {
     New-Item -Path $tempDir -ItemType Directory -Force | Out-Null
-    New-Item -Path (Join-Path -Path $tempDir -ChildPath $modFolderName) -ItemType Directory -Force | Out-Null
+    New-Item -Path (Join-Path -Path $tempDir -ChildPath $modName) -ItemType Directory -Force | Out-Null
     # Copy all files to the subdirectory, excluding the temp directory and zip files
-    Get-ChildItem -Path $modPath -Exclude "temp_*", "*.zip" | Copy-Item -Destination (Join-Path -Path $tempDir -ChildPath $modFolderName) -Recurse -Force
-    Write-Host "Created temporary directory structure: $tempDir\$modFolderName"
+    Get-ChildItem -Path $modPath -Exclude "temp_*", "*.zip" | Copy-Item -Destination (Join-Path -Path $tempDir -ChildPath $modName) -Recurse -Force
+    Write-Host "Created temporary directory structure: $tempDir\$modName"
 } catch {
     Write-Error "Failed to create temporary directory structure: $_"
     exit 1
@@ -82,7 +82,7 @@ if (Test-Path -Path $zipPath) {
 # Create zip archive with forward slashes using System.IO.Compression.ZipFile
 try {
     $zip = [System.IO.Compression.ZipFile]::Open($zipPath, [System.IO.Compression.ZipArchiveMode]::Create)
-    $files = Get-ChildItem -Path (Join-Path -Path $tempDir -ChildPath $modFolderName) -Recurse -File
+    $files = Get-ChildItem -Path (Join-Path -Path $tempDir -ChildPath $modName) -Recurse -File
     foreach ($file in $files) {
         $relativePath = $file.FullName.Substring($tempDir.Length + 1).Replace('\', '/')
         $entry = $zip.CreateEntry($relativePath)

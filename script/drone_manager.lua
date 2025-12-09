@@ -35,7 +35,7 @@ make_player_drone = function(player)
         player_position = player.position
     end
     local player_surface = player.physical_surface
-
+    --TODO: Find drones of higher qualities
     -- Find a spawn position close to the player.
     local position = player_surface.find_non_colliding_position(
             names.units.construction_drone,

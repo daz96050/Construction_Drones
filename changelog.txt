@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.6
+Date: 2025-12-09
+  Bugfix:
+    - Drones will only pull/place builds of the correct quality
+  Known Issues:
+    - Quality Drones will not work
+---------------------------------------------------------------------------------------------------
 Version: 0.1.5
 Date: 2025-11-01
   Bugfix:
