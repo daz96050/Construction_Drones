@@ -1,14 +1,14 @@
 local logs = require("logs")
 local random = math.random
 local insert = table.insert
+local shared = require("shared")
 
 make_path_request = function(drone_data, player, target)
-    local prototype = get_prototype(names.units.construction_drone)
     logs.trace("Prototype for path request: " .. serpent.block(prototype))
 
     local path_id = player.physical_surface.request_path {
-        bounding_box = prototype.collision_box,
-        collision_mask = prototype.collision_mask,
+        bounding_box = shared.bounding_box,
+        collision_mask = "construction_drone",
         start = getPlayerPosition(player),
         goal = target.position,
         force = player.force,
@@ -35,7 +35,7 @@ make_player_drone = function(player)
         player_position = player.position
     end
     local player_surface = player.physical_surface
-    --TODO: Find drones of higher qualities
+
     -- Find a spawn position close to the player.
     local position = player_surface.find_non_colliding_position(
             names.units.construction_drone,
@@ -49,7 +49,8 @@ make_player_drone = function(player)
         logs.debug("Could not find spawn position for drone")
         return
     end
-
+    local drone = get_highest_quality_drone_available(player.character)
+    logs.debug("available drones: " ..serpent.block(drone))
     -- Remove a drone from the player's inventory.
     local removed = player.character.remove_item({ name = names.units.construction_drone, count = 1 })
     if removed == 0 then
@@ -62,6 +63,7 @@ make_player_drone = function(player)
         name = names.units.construction_drone,
         position = position,
         force = player.force,
+        quality = drone.quality
     }
 
     -- Attach the player to the drone data entry.
@@ -76,6 +78,12 @@ make_player_drone = function(player)
     data.drone_commands[drone.unit_number] = drone_data
 
     return drone
+end
+
+get_highest_quality_drone_available = function(player)
+    for _, inventory in pairs(inventories(source_entity)) do
+        return inventory.get_item_quality_counts(names.units.construction_drone)
+    end
 end
 
 set_drone_order = function(drone, drone_data)

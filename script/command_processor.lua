@@ -132,7 +132,7 @@ check_proxy = function(entity, player)
     local items = entity.item_requests
 
     for _, item in pairs(items) do
-        if player.get_item_count(item.name) > 0 or player.cheat_mode then
+        if player.get_item_count({name = item.name, quality = item.quality}) > 0 or player.cheat_mode then
             local drone_data = {
                 player = player,
                 order = drone_orders.request_proxy,
@@ -704,13 +704,12 @@ process_request_proxy_command = function(drone_data)
     local drone = drone_data.entity
 
     local drone_inventory = get_drone_inventory(drone_data)
-    local find_item_stack = drone_inventory.find_item_stack
     local requests = target.item_requests
 
     local stack
     local requests_index
     for k, item in pairs(requests) do
-        stack = find_item_stack(item.name)
+        stack = drone_inventory.find_item_stack({name = item.name, quality = item.quality})
         requests_index = k
         if stack then
             break
@@ -726,9 +725,6 @@ process_request_proxy_command = function(drone_data)
         return
     end
 
-    -- print("We are in range, and we have what he wants")
-
-    local stack_name = stack.name
     local position = target.position
     local inserted = 0
     local moduleInv = proxy_target.get_module_inventory()
@@ -742,11 +738,10 @@ process_request_proxy_command = function(drone_data)
     end
 
     if inserted == 0 then
-        -- print("Can't insert anything anyway, kill the proxy")
         target.destroy()
         return cancel_drone_order(drone_data)
     end
-    drone_inventory.remove({ name = stack_name, count = inserted })
+    drone_inventory.remove({ name = stack.name, count = inserted, quality = stack.quality })
     requests[requests_index].count = requests[requests_index].count - inserted
     if requests[requests_index].count <= 0 then
         requests[requests_index] = nil

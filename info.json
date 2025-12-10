@@ -1,11 +1,12 @@
 {
     "name": "Construction_Drones_Forked",
-    "version": "0.1.6",
+    "version": "0.1.7",
     "title": "Updated Construction Drones - Forked",
     "author": "daz96050",
     "contact": "",
     "homepage": "https://github.com/daz96050/Construction_Drones",
     "description": "Adds ground based construction robots. A repackage the original mod by Klonan. Forked to fix some long-standing issues.\nNow with quality support",
-    "dependencies": ["base >= 2.0.0"],
+    "dependencies": ["base >= 2.0.0",
+    "? quality"],
     "factorio_version": "2.0"
 }

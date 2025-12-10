@@ -39,12 +39,7 @@ transfer_stack = function(destination, source_entity, stack)
         destination.insert(stack)
         return stack.count
     end
-    local available_items
-    if stack.quality then
-        available_items = source_entity.get_item_count({ name = stack.name, quality = stack.quality })
-    else
-        available_items = source_entity.get_item_count(stack.name)
-    end
+    local available_items = source_entity.get_item_count({ name = stack.name, quality = stack.quality })
     -- Respect the requested stack count, but cap at available items
     logs.trace("Available Items: " ..serpent.block(available_items))
     stack.count = math.min(stack.count, available_items)
@@ -78,15 +73,12 @@ transfer_stack = function(destination, source_entity, stack)
 end
 
 transfer_inventory = function(source, destination)
-    local insert = destination.insert
-    local remove = source.remove
-    local can_insert = destination.can_insert
     for k = 1, #source do
         local stack = source[k]
-        if stack and stack.valid and stack.valid_for_read and can_insert(stack) then
-            local remove_stack = { name = stack.name, count = insert(stack), quality = stack.quality }
+        if stack and stack.valid and stack.valid_for_read and destination.can_insert(stack) then
+            local remove_stack = { name = stack.name, count = destination.insert(stack), quality = stack.quality }
             if remove_stack.count > 0 then
-                remove(remove_stack)
+                destination.remove(remove_stack)
             end
         end
     end
