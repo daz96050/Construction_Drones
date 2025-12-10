@@ -1,5 +1,7 @@
 local path = util.path("data/units/construction_drone/")
 local name = names.units.construction_drone
+local qualities = table.deepcopy(data.raw["quality"])
+unit_data = require("shared")
 
 local scale = 1
 
@@ -31,22 +33,24 @@ local animation = {
     },
 }
 
-local unit = {
+local quality_stats = {
+    max_health = 45,
+    movement_speed = 0.16,
+}
+
+local base_stats = {
     type = "unit",
     name = name,
-    localised_name = name,
     icon = path .. "construction_drone_icon.png",
     icon_size = 64,
     flags = { "placeable-player", "placeable-enemy", "placeable-off-grid" },
     map_color = { r = 0, g = 1, b = 1, a = 1 },
-    max_health = 45,
     order = "b-b-a",
     subgroup = "logistic-network",
     has_belt_immunity = true,
     can_open_gates = true,
     affected_by_tiles = true,
     collision_box = { { -0.01, -0.01 }, { 0.01, 0.01 } },
-    -- collision_box = {{-0.2, -0.2}, {0.2, 0.2}},
     selection_box = { { -0.6 * scale, -1.0 * scale }, { 0.6 * scale, 0.4 * scale } },
     attack_parameters = {
         type = "beam",
@@ -68,15 +72,12 @@ local unit = {
     },
     vision_distance = 100,
     not_controllable = true,
-    movement_speed = 0.16,
     distance_per_frame = 0.1,
-    -- absorptions_to_join_attack = 20000000,
     distraction_cooldown = 30000000,
     min_pursue_time = 0,
     max_pursue_distance = 0,
     corpse = nil,
     dying_explosion = "explosion",
-    -- dying_sound =  make_biter_dying_sounds(0.4),
     working_sound = {
         sound = {
             { filename = path .. "construction_drone_1.ogg" },
@@ -124,7 +125,20 @@ local unit = {
         },
     },
     resistances = { { type = "acid", percent = 95 } },
+    alert_when_damaged = false,
+    hide_resistances = true
+
 }
+local unit = {}
+
+for key, value in pairs(quality_stats) do
+    unit[key] = value
+end
+
+for key, value in pairs(base_stats) do
+    unit[key] = value
+end
+
 
 local item = {
     type = "item",
@@ -142,9 +156,8 @@ local item = {
 local recipe = {
     type = "recipe",
     name = name,
-    localised_name = name,
     category = data.raw.recipe["construction-robot"].category,
-    allow_quality = false,
+    auto_recycle = false,
     enabled = true,
     ingredients = {
         { type="item", name="iron-plate", amount = 5 },
@@ -279,4 +292,18 @@ attack_beam.action = {
     },
 }
 
-data:extend { unit, item, recipe, proxy_chest, build_beam, deconstruct_beam, pickup_beam, attack_beam }
+for quality_name, quality_value in pairs(qualities) do
+    if(quality_name ~= "quality-unknown") then
+        local quality_unit = table.deepcopy(unit)
+        log("quality_value: "..serpent.block(quality_value))
+        quality_unit.name = quality_name.."-"..unit.name
+        quality_data = {
+            unit_name = quality_unit.name,
+            name = quality_value.name,
+            level = quality_value.level
+        }
+        table.insert(unit_data.drones, quality_data)
+        log("unit data: " ..serpent.block(unit_data.drones))
+        data:extend { quality_unit, item, recipe, proxy_chest, build_beam, deconstruct_beam, pickup_beam, attack_beam }
+    end
+end

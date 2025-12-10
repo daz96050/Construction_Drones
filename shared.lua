@@ -1,7 +1,11 @@
 -- Shared data interface between data and script, notably prototype names.
 local data = {}
-
+data.drones = {}
 data.units = { construction_drone = "Construction_Drone" }
+data.bounding_box = { { -0.01, -0.01 }, { 0.01, 0.01 } }
+data.collision_mask = { not_colliding_with_itself = true, consider_tile_transitions = true, layers = {
+    construction_drone = true
+}}
 
 data.technologies = { construction_drone_system = "Construction Drone System" }
 

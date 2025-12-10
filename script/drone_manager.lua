@@ -8,7 +8,7 @@ make_path_request = function(drone_data, player, target)
 
     local path_id = player.physical_surface.request_path {
         bounding_box = shared.bounding_box,
-        collision_mask = "construction_drone",
+        collision_mask = shared.collision_mask,
         start = getPlayerPosition(player),
         goal = target.position,
         force = player.force,
