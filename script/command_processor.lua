@@ -831,7 +831,7 @@ process_return_to_player_command = function(drone_data, force)
         return
     end
 
-    if player.character.insert({ name = names.units.construction_drone, count = 1 }) == 0 then
+    if player.character.insert({ name = names.units.construction_drone, count = 1, quality = drone_data.entity.quality }) == 0 then
         logs.debug("Could not insert drone to player character inventory, waiting")
         drone_wait(drone_data, random(18, 24)) --If the drone didn't get inserted into the players inventory, wait & follow the player until it does
         return

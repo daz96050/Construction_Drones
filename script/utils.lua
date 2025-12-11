@@ -119,9 +119,9 @@ get_radius = function(entity, range, goto_entity)
         radius = entity.get_radius() * 2
     elseif is_commandable(entity.name) then
         if range == ranges.interact then
-            radius = get_radius_map()[entity.name] + drone_prototypes[entity.name].interact_range
+            radius = get_radius_map()[entity.name] + 5
         elseif range == ranges.return_to_character then
-            radius = get_radius_map()[entity.name] + drone_prototypes[entity.name].return_to_character_range
+            radius = get_radius_map()[entity.name] - 1
         else
             radius = get_radius_map()[entity.name]
         end

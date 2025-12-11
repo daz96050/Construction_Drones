@@ -297,13 +297,9 @@ for quality_name, quality_value in pairs(qualities) do
         local quality_unit = table.deepcopy(unit)
         log("quality_value: "..serpent.block(quality_value))
         quality_unit.name = quality_name.."-"..unit.name
-        quality_data = {
-            unit_name = quality_unit.name,
-            name = quality_value.name,
-            level = quality_value.level
-        }
-        table.insert(unit_data.drones, quality_data)
-        log("unit data: " ..serpent.block(unit_data.drones))
+        local quality_data = unit_data.drone_quality[quality_value.name]
+        quality_unit.movement_speed = quality_data.movement_speed
+        quality_unit.max_health = quality_data.max_health
         data:extend { quality_unit, item, recipe, proxy_chest, build_beam, deconstruct_beam, pickup_beam, attack_beam }
     end
 end
