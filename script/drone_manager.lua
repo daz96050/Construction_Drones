@@ -4,8 +4,6 @@ local insert = table.insert
 local shared = require("shared")
 
 make_path_request = function(drone_data, player, target)
-    logs.trace("Prototype for path request: " .. serpent.block(prototype))
-
     local path_id = player.physical_surface.request_path {
         bounding_box = shared.bounding_box,
         collision_mask = shared.collision_mask,
@@ -36,9 +34,19 @@ make_player_drone = function(player)
     end
     local player_surface = player.physical_surface
 
+    local available_drones = get_quality_drones(player.character)
+    --get the first available drone
+    local drone_to_use = available_drones[math.random( #available_drones )]
+    if drone_to_use == nil then
+        game.print("No available drones of any quality")
+        return
+    end
+    local prototype_name = drone_to_use.quality.."-"..drone_to_use.name
+
+
     -- Find a spawn position close to the player.
     local position = player_surface.find_non_colliding_position(
-            names.units.construction_drone,
+            prototype_name,
             player_position,
             5,
             0.5,
@@ -49,10 +57,11 @@ make_player_drone = function(player)
         logs.debug("Could not find spawn position for drone")
         return
     end
-    local drone = get_highest_quality_drone_available(player.character)
-    logs.debug("available drones: " ..serpent.block(drone))
+
     -- Remove a drone from the player's inventory.
-    local removed = player.character.remove_item({ name = names.units.construction_drone, count = 1 })
+    local to_remove = { name = names.units.construction_drone, count = 1, quality = drone_to_use.quality }
+    logs.debug("drone to remove from character: " ..serpent.block(to_remove))
+    local removed = player.character.remove_item(to_remove)
     if removed == 0 then
         logs.debug("could not remove drone from player inventory")
         return
@@ -60,10 +69,10 @@ make_player_drone = function(player)
 
     -- Create the drone entity.
     local drone = player_surface.create_entity {
-        name = names.units.construction_drone,
+        name = prototype_name,
         position = position,
         force = player.force,
-        quality = drone.quality
+        quality = drone_to_use.quality
     }
 
     -- Attach the player to the drone data entry.
@@ -80,11 +89,44 @@ make_player_drone = function(player)
     return drone
 end
 
-get_highest_quality_drone_available = function(player)
-    for _, inventory in pairs(inventories(source_entity)) do
-        return inventory.get_item_quality_counts(names.units.construction_drone)
+get_quality_drones = function(player)
+    local available_drones = {}
+    for _, inventory in pairs(inventories(player)) do
+        for _, item in ipairs(inventory.get_contents()) do
+            if string.find(item.name, "Construction_Drone") then
+                table.insert(available_drones, item)
+            end
+        end
     end
+    logs.debug("available drones: "..serpent.block(available_drones))
+    return available_drones
 end
+--
+--sort_drone_quality = function(unitList)
+--    local quality_drones = {}
+--    --For each item in the unit+quality list
+--    local drone_quality_data = {}
+--    for _, data in pairs(prototypes.mod_data) do
+--        if string.find(data.name, "drone-quality") then
+--            table.insert(drone_quality_data, data)
+--        end
+--    end
+--    logs.debug("drone quality data: " ..serpent.block(drone_quality_data))
+--    logs.debug("unit list: "..serpent.block(unitList))
+--    for _, item in pairs(shared.drones) do
+--        for _, drone in pairs(unitList) do --for each item in the available drones
+--            --if the drone quality matches the item quality, add it to the list
+--            logs.debug("drone quality: "..drone.quality)
+--            logs.debug("item quality: "..item.name)
+--
+--            if drone.quality == item.name then
+--                logs.debug("drone quality matches: "..drone.quality)
+--                table.insert(quality_drones, {unit_name = item.unit_name, quality = item.level, quality_name = item.name})
+--            end
+--        end
+--    end
+--    logs.debug("quality drones: "..serpent.block(quality_drones))
+--end
 
 set_drone_order = function(drone, drone_data)
     drone.ai_settings.path_resolution_modifier = 0
@@ -152,12 +194,12 @@ clear_extra_targets = function(drone_data)
     local targets = validate(drone_data.extra_targets)
     local order = drone_data.order
 
-    for k, entity in pairs(targets) do
+    for _, entity in pairs(targets) do
         data.already_targeted[unique_index(entity)] = nil
     end
 
     if order == drone_orders.deconstruct or order == drone_orders.cliff_deconstruct then
-        for index, entity in pairs(targets) do
+        for _, entity in pairs(targets) do
             local index = unique_index(entity)
             data.sent_deconstruction[index] = (data.sent_deconstruction[index] or 1) - 1
         end
@@ -218,17 +260,17 @@ cancel_drone_order = function(drone_data, on_removed)
 end
 
 move_to_order_target = function(drone_data, target)
-    logs.debug("attempting to move to target")
+    logs.trace("attempting to move to target")
     local drone = drone_data.entity
 
     if drone.surface ~= target.surface then
-        logs.debug("Drone is on a different surface, task cancelled")
+        logs.trace("Drone is on a different surface, task cancelled")
         cancel_drone_order(drone_data)
         return
     end
 
     if in_construction_range(drone, target) then
-        logs.debug("Drone is in construction range")
+        logs.trace("Drone is in construction range")
         return true
     end
 
@@ -244,19 +286,19 @@ end
 
 move_to_player = function(drone_data, player)
     local drone = drone_data.entity
-    logs.debug("attempting to move to player")
+    logs.trace("attempting to move to player")
 
     if drone.surface ~= getPlayerSurface(player) then --if the player is on a different surface, stop trying to do anything
         cancel_drone_order(drone_data)
-        logs.debug("Drone is on a different surface, cannot move to player")
+        logs.trace("Drone is on a different surface, cannot move to player")
         return -- tell the caller you can't get to the player
     end
     if distance(drone.position, player.physical_position) < 2 then
-        logs.debug("drone distance is < 2 from player")
+        logs.trace("drone distance is < 2 from player")
         return true -- tell the caller you're already at the player
     end
 
-    logs.debug("Sending drone to player physical position")
+    logs.trace("Sending drone to player physical position")
     drone.commandable.set_command {
         type = defines.command.go_to_location,
         destination_entity = player.character or nil,
@@ -265,7 +307,7 @@ move_to_player = function(drone_data, player)
         distraction = defines.distraction.none,
         pathfind_flags = drone_pathfind_flags,
     }
-    logs.debug(log_separator)
+    logs.trace(log_separator)
 end
 
 --Modify the alt-image of the item the drone is carrying on the drone

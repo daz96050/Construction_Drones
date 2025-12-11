@@ -1,4 +1,5 @@
 local logs = require("logs")
+local unit_data = require("shared")
 local insert = table.insert
 
 -- RPC
@@ -73,7 +74,7 @@ scan_for_nearby_jobs = function(player, area)
 
         if entity.to_be_deconstructed() then
             player_queue[index] = { type = drone_orders.deconstruct, entity = entity }
-            return true
+            return truee
         end
 
         if (entity.get_health_ratio() or 1) < 1 then
@@ -92,12 +93,21 @@ scan_for_nearby_jobs = function(player, area)
     end
 end
 
+get_available_drones = function(player)
+    local drone_count = 0
+    for quality, _ in pairs(unit_data.drone_quality) do
+        drone_count = drone_count + player.get_item_count({name = names.units.construction_drone, quality = quality})
+    end
+    return drone_count
+end
+
 can_player_spawn_drones = function(player)
     if not player.is_shortcut_toggled("construction-drone-toggle") then
         return
     end
+    local current_item_count = get_available_drones(player)
 
-    local count = player.get_item_count(names.units.construction_drone) - (data.request_count[player.index] or 0)
+    local count = current_item_count - (data.request_count[player.index] or 0)
     return count > 0
 end
 
@@ -107,7 +117,7 @@ check_player_jobs = function(player)
     if not queue then return end
     local count = math.min(
             5,
-            player.get_item_count(names.units.construction_drone) - (data.request_count[player.index] or 0)
+            get_available_drones(player) - (data.request_count[player.index] or 0)
     )
 
     for _ = 1, count do
@@ -406,7 +416,7 @@ lib.on_configuration_changed = function()
 
     if not data.set_default_shortcut then
         data.set_default_shortcut = true
-        for k, player in pairs(game.players) do
+        for _, player in pairs(game.players) do
             player.set_shortcut_toggled("construction-drone-toggle", true)
             local player_settings = settings.get_player_settings(player)
             if not player_settings["drone_process_other_player_construction"] then
