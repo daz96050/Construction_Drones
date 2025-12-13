@@ -1,9 +1,10 @@
 ---------------------------------------------------------------------------------------------------
-Version: 0.1.7
-Date: 2025-12-10
+Version: 0.1.8
+Date: 2025-12-12
   Bugfix:
     - Quality drones will now work as expected
-    - Quality modules can now be placed by drones
+    - Drones can now place Quality modules
+    - Note: Quality drones only work with the default quality values. Mods that rename quality or add more qualities will not work.
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.6
 Date: 2025-12-09

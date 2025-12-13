@@ -1,11 +1,11 @@
 {
     "name": "Construction_Drones_Forked",
-    "version": "0.1.7",
+    "version": "0.1.8",
     "title": "Updated Construction Drones - Forked",
     "author": "daz96050",
     "contact": "",
     "homepage": "https://github.com/daz96050/Construction_Drones",
-    "description": "Adds ground based construction robots. A repackage the original mod by Klonan. Forked to fix some long-standing issues.\nNow with quality support",
+    "description": "Adds ground based construction robots. A repackage the original mod by Klonan. Forked to fix some long-standing issues.\nNow with quality support\nQuality drones only work with the default quality values. Mods that rename quality or add more qualities will not work.",
     "dependencies": [
         "base >= 2.0.0",
         "? quality"
