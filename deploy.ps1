@@ -122,4 +122,3 @@ try {
 }
 
 Write-Host "Mod packaging and deployment completed successfully!"
-start "D:\SteamLibrary\steamapps\common\Factorio\bin\x64\factorio.exe"  <#-ArgumentList "--disable-audio","--load-game _autosave1","--disable-migration-window"#>

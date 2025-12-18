@@ -35,16 +35,16 @@ make_player_drone = function(player)
     local player_surface = player.physical_surface
 
     local available_drones = get_quality_drones(player.character)
-    --get the first available drone
-    local drone_to_use = available_drones[math.random( #available_drones )]
-    if drone_to_use == nil then
-        game.print("No available drones of any quality")
+    if #available_drones == 0 then
+        logs.debug("No available drones of any quality")
         return
     end
-    local prototype_name = drone_to_use.quality.."-"..drone_to_use.name
 
+    -- Get a random available drone
+    local drone_to_use = available_drones[math.random(#available_drones)]
+    local prototype_name = drone_to_use.quality .. "-" .. drone_to_use.name
 
-    -- Find a spawn position close to the player.
+    -- Find a spawn position close to the player
     local position = player_surface.find_non_colliding_position(
             prototype_name,
             player_position,
@@ -58,16 +58,16 @@ make_player_drone = function(player)
         return
     end
 
-    -- Remove a drone from the player's inventory.
+    -- Remove a drone from the player's inventory
     local to_remove = { name = names.units.construction_drone, count = 1, quality = drone_to_use.quality }
-    logs.debug("drone to remove from character: " ..serpent.block(to_remove))
+    logs.debug("drone to remove from character: " .. serpent.block(to_remove))
     local removed = player.character.remove_item(to_remove)
     if removed == 0 then
         logs.debug("could not remove drone from player inventory")
         return
     end
 
-    -- Create the drone entity.
+    -- Create the drone entity
     local drone = player_surface.create_entity {
         name = prototype_name,
         position = position,
@@ -75,19 +75,20 @@ make_player_drone = function(player)
         quality = drone_to_use.quality
     }
 
-    -- Attach the player to the drone data entry.
+    -- Attach the player to the drone data entry
     local drone_data = {
         entity = drone,
         player = player,
     }
 
-    -- Register the drone for tracking.
+    -- Register the drone for tracking
     script.register_on_object_destroyed(drone)
     data.drone_commands = data.drone_commands or {}
     data.drone_commands[drone.unit_number] = drone_data
 
     return drone
 end
+
 
 get_quality_drones = function(player)
     local available_drones = {}

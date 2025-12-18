@@ -13,3 +13,5 @@ game.player.surface.always_day=true
 remote.call("construction_drone", "debug", true)
 remote.call("construction_drone", "trace", true)
 remote.call("construction_drone", "console", true)
+
+--disable-audio --load-game _autosave1 --disable-migration-window
