@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.10
+Date: 16 February 2026
+  Bugfix:
+    - Prevent crash when a (multiplayer) player has disconnected as drone is returning
+---------------------------------------------------------------------------------------------------
 Version: 0.1.9
 Date: 18 December 2025
   Bugfix:

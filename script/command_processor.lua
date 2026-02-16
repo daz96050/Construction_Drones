@@ -823,6 +823,11 @@ process_return_to_player_command = function(drone_data, force)
 
     if not (force or move_to_player(drone_data, player)) then return end -- attempt to move to the player
 
+    --Now that we're at the player (we think), check they still exist, they might have logged off
+    if not player.valid then
+        cancel_drone_order(drone_data)
+        return 
+    end
     local inventory = get_drone_inventory(drone_data)
     transfer_inventory(inventory, player.character)
 
