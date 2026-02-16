@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.11
+Date: 16 February 2026
+  Changes:
+    - Removed custom collision mask from all prototypes (will no longer show buildings as being modified by this mod)
+---------------------------------------------------------------------------------------------------
 Version: 0.1.10
 Date: 16 February 2026
   Bugfix:
