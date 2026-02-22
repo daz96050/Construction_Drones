@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.12
+Date: 21 February 2026
+  Bugfix:
+    - Fix crash when drone cannot transfer inventory to missing player
+---------------------------------------------------------------------------------------------------
 Version: 0.1.11
 Date: 16 February 2026
   Changes:

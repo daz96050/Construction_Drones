@@ -75,7 +75,7 @@ end
 transfer_inventory = function(source, destination)
     for k = 1, #source do
         local stack = source[k]
-        if stack and stack.valid and stack.valid_for_read and destination.can_insert(stack) then
+        if stack and stack.valid and stack.valid_for_read and destination and destination.can_insert(stack) then
             local remove_stack = { name = stack.name, count = destination.insert(stack), quality = stack.quality }
             if remove_stack.count > 0 then
                 source.remove(remove_stack)
