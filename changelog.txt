@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.13
+Date: 21 February 2026
+  Change:
+    - Add "spectral drones", which can pass through all objects except impassible tiles.
+  Bugfix:
+    - Display the correct name when hovering over drones in-world
+---------------------------------------------------------------------------------------------------
 Version: 0.1.12
 Date: 21 February 2026
   Bugfix:

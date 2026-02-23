@@ -4,6 +4,8 @@ local qualities = table.deepcopy(data.raw["quality"])
 unit_data = require("shared")
 
 local scale = 1
+local default_collision_mask = { not_colliding_with_itself = true, consider_tile_transitions = true, layers = {item = true}}
+local spectral_collision_mask = { not_colliding_with_itself = true, colliding_with_tiles_only = true, layers = {}}
 
 local animation = {
     layers = {
@@ -150,7 +152,7 @@ local item = {
     subgroup = data.raw.item["construction-robot"].subgroup,
     order = "a-" .. name,
     stack_size = 10,
-    place_result = nil, -- name
+    place_result = nil,
 }
 
 local recipe = {
@@ -295,11 +297,17 @@ attack_beam.action = {
 for quality_name, quality_value in pairs(qualities) do
     if(quality_name ~= "quality-unknown") then
         local quality_unit = table.deepcopy(unit)
-        log("quality_value: "..serpent.block(quality_value))
         quality_unit.name = quality_name.."-"..unit.name
+        quality_unit.collision_mask = default_collision_mask
         local quality_data = unit_data.drone_quality[quality_value.name]
         quality_unit.movement_speed = quality_data.movement_speed
         quality_unit.max_health = quality_data.max_health
-        data:extend { quality_unit, item, recipe, proxy_chest, build_beam, deconstruct_beam, pickup_beam, attack_beam }
+        
+        local spectral_quality_unit = table.deepcopy(quality_unit)
+        spectral_quality_unit.name = spectral_quality_unit.name.."_spectral"
+        spectral_quality_unit.collision_mask = spectral_collision_mask
+        data:extend { quality_unit, spectral_quality_unit }
     end
 end
+
+data:extend{item, recipe, proxy_chest, build_beam, deconstruct_beam, pickup_beam, attack_beam}

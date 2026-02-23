@@ -1,4 +1,5 @@
 local logs = require("logs")
+local shared = require("shared")
 local sin, cos = math.sin, math.cos
 local angle = util.angle
 local floor = math.floor
@@ -223,6 +224,21 @@ get_entity_flag = function(entity, tag_name)
         return entity.flags[tag_name]
         else return nil
     end
+end
+
+use_spectral_drones = function(player)
+    if player.force.technologies["spectral-drones"] and player.force.technologies["spectral-drones"].researched then
+        return true
+    end
+    return false
+end
+
+get_collision_mask = function(player)
+    local collision_mask_to_use = shared.collision_mask
+    if player.force.technologies["spectral-drones"] and player.force.technologies["spectral-drones"].researched then
+        collision_mask_to_use = shared.spectral_collision_mask 
+    end
+    return collision_mask_to_use
 end
 
 inspect_item_properties = function(inspection, item)
