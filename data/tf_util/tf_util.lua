@@ -213,15 +213,6 @@ end
 
 util.copy = util.table.deepcopy
 
-util.flying_unit_collision_mask = function()
-    return { "not-colliding-with-itself", "layer-15" }
-end
-
-
-util.ground_unit_collision_mask = function()
-    return { "not-colliding-with-itself", "doodad-layer", "item-layer" }
-end
-
 
 util.projectile_collision_mask = function()
     return { "layer-15", "player-layer", "train-layer" }

@@ -4,9 +4,11 @@ local insert = table.insert
 local shared = require("shared")
 
 make_path_request = function(drone_data, player, target)
+    local collision_mask_to_use = get_collision_mask(player)
+
     local path_id = player.physical_surface.request_path {
         bounding_box = shared.bounding_box,
-        collision_mask = shared.collision_mask,
+        collision_mask = collision_mask_to_use,  -- Use the determined mask
         start = getPlayerPosition(player),
         goal = target.position,
         force = player.force,
@@ -67,6 +69,10 @@ make_player_drone = function(player)
         return
     end
 
+    if use_spectral_drones(player) then
+        prototype_name = prototype_name.."_spectral"
+    end
+
     -- Create the drone entity
     local drone = player_surface.create_entity {
         name = prototype_name,
@@ -102,32 +108,6 @@ get_quality_drones = function(player)
     logs.debug("available drones: "..serpent.block(available_drones))
     return available_drones
 end
---
---sort_drone_quality = function(unitList)
---    local quality_drones = {}
---    --For each item in the unit+quality list
---    local drone_quality_data = {}
---    for _, data in pairs(prototypes.mod_data) do
---        if string.find(data.name, "drone-quality") then
---            table.insert(drone_quality_data, data)
---        end
---    end
---    logs.debug("drone quality data: " ..serpent.block(drone_quality_data))
---    logs.debug("unit list: "..serpent.block(unitList))
---    for _, item in pairs(shared.drones) do
---        for _, drone in pairs(unitList) do --for each item in the available drones
---            --if the drone quality matches the item quality, add it to the list
---            logs.debug("drone quality: "..drone.quality)
---            logs.debug("item quality: "..item.name)
---
---            if drone.quality == item.name then
---                logs.debug("drone quality matches: "..drone.quality)
---                table.insert(quality_drones, {unit_name = item.unit_name, quality = item.level, quality_name = item.name})
---            end
---        end
---    end
---    logs.debug("quality drones: "..serpent.block(quality_drones))
---end
 
 set_drone_order = function(drone, drone_data)
     drone.ai_settings.path_resolution_modifier = 0
