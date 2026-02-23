@@ -61,7 +61,7 @@ try {
     New-Item -Path $tempDir -ItemType Directory -Force | Out-Null
     New-Item -Path (Join-Path -Path $tempDir -ChildPath $modName) -ItemType Directory -Force | Out-Null
     # Copy all files to the subdirectory, excluding the temp directory and zip files
-    Get-ChildItem -Path $modPath -Exclude "temp_*", "*.zip" | Copy-Item -Destination (Join-Path -Path $tempDir -ChildPath $modName) -Recurse -Force
+    Get-ChildItem -Path $modPath -Exclude "temp_*", "*.zip", ".github",".idea",".vscode","*.ps1" | Copy-Item -Destination (Join-Path -Path $tempDir -ChildPath $modName) -Recurse -Force
     Write-Host "Created temporary directory structure: $tempDir\$modName"
 } catch {
     Write-Error "Failed to create temporary directory structure: $_"
