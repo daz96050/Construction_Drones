@@ -440,6 +440,9 @@ lib.on_load = function()
     data = storage.construction_drone or data
     storage.construction_drone = data
 
+    -- Ensure active_drone_count table exists (for old saves)
+    data.active_drone_count = data.active_drone_count or {}
+
     on_runtime_mod_setting_changed()
 end
 
@@ -448,6 +451,9 @@ lib.on_init = function()
     game.map_settings.steering.moving.force_unit_fuzzy_goto_behavior = false
     game.map_settings.path_finder.use_path_cache = false
     storage.construction_drone = storage.construction_drone or data
+
+    -- Ensure active_drone_count table exists
+    data.active_drone_count = data.active_drone_count or {}
 
     for _, player in pairs(game.players) do
         player.set_shortcut_toggled("construction-drone-toggle", true)

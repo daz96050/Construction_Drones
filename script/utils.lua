@@ -290,6 +290,9 @@ end
 
 -- Get how many drones are currently active for a player (uses incremental counter)
 get_active_drone_count = function(player)
+    if not data or not data.active_drone_count then
+        return 0
+    end
     return data.active_drone_count[player.index] or 0
 end
 

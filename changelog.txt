@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.1
+Date: 24 February 2026
+  Bugfix:
+    - Fixed a crash that could occur when the mod tries to access the active drone count for a player before it has been initialized (e.g. when loading an old save)
+---------------------------------------------------------------------------------------------------
 Version: 1.0.0
 Date: 24 February 2026
   Change:
