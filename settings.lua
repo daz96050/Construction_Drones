@@ -63,7 +63,7 @@ data:extend({
         type = "bool-setting",
         name = "construction-drone-unlimited",
         setting_type = "startup",
-        default_value = true,
+        default_value = false,
         order = "z",
         description = "Allow unlimited construction drones by default and hide related technologies"
     }

@@ -3,6 +3,8 @@ Version: 1.0.0
 Date: 24 February 2026
   Change:
     - Added proper tech tree integration, with 9 tiers of construction drones. Each tier adds 2 to the maximum number of drones the player can have active at once, up to a maximum of 20 drones.
+    - "Unlimited drones" technology is also available, which allows for unlimited drones to be dispatched at once.
+    - Added a setting to allow unlimited construction drones by default and hide related technologies.
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.13
 Date: 22 February 2026
