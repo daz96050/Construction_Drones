@@ -248,7 +248,7 @@ get_allowed_drone_count = function(player)
     end
 
     -- Check cache first
-    if data.drone_count_cache[player_index] ~= nil then
+    if data.drone_count_cache and data.drone_count_cache[player_index] ~= nil then
         return data.drone_count_cache[player_index]
     end
 
@@ -278,14 +278,21 @@ get_allowed_drone_count = function(player)
         allowed_count = allowed_count + (force_bonus or 0)
     end
 
-    -- Store in cache and return
+    -- Ensure cache table exists, store and return
+    data.drone_count_cache = data.drone_count_cache or {}
     data.drone_count_cache[player_index] = allowed_count
     return allowed_count
 end
 
 -- Add this function to clear cache for a player (call on tech changes)
 invalidate_drone_count_cache = function(player)
-    data.drone_count_cache[player.index] = nil
+    if data.drone_count_cache then
+        data.drone_count_cache[player.index] = nil
+    end
+    if data.active_drone_count then
+        data.active_drone_count[player.index] = 0
+    end
+    data.active_drone_count = data.active_drone_count or {}
 end
 
 -- Get how many drones are currently active for a player (uses incremental counter)
