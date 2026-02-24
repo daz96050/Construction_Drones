@@ -245,8 +245,8 @@ get_allowed_drone_count = function(player)
     local player_index = player.index
 
     -- Check cache first
-    if drone_count_cache[player_index] ~= nil then
-        return drone_count_cache[player_index]
+    if data.drone_count_cache[player_index] ~= nil then
+        return data.drone_count_cache[player_index]
     end
 
     -- Compute the value
@@ -257,7 +257,7 @@ get_allowed_drone_count = function(player)
         allowed_count = math.huge  -- Use math.huge for infinity in Lua
     else
         allowed_count = 2
-        for i = 1, 10 do
+        for i = 1, 9 do
             if is_tech_unlocked(player, "construction_drone_count_"..i) then
                 allowed_count = allowed_count + 2
             end
@@ -265,13 +265,13 @@ get_allowed_drone_count = function(player)
     end
 
     -- Store in cache and return
-    drone_count_cache[player_index] = allowed_count
+    data.drone_count_cache[player_index] = allowed_count
     return allowed_count
 end
 
 -- Add this function to clear cache for a player (call on tech changes)
 invalidate_drone_count_cache = function(player)
-    drone_count_cache[player.index] = nil
+    data.drone_count_cache[player.index] = nil
 end
 
 -- Get how many drones are currently active for a player (uses incremental counter)

@@ -50,7 +50,4 @@ data.beams = {
     attack = "Attack_Beam",
 }
 
-data.drone_count_cache = {}
-data.active_drone_count = {}  -- Tracks active drones per player index
-
 return data

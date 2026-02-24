@@ -295,8 +295,9 @@ check_repair = function(entity, player)
 end
 
 check_job = function(player, job)
-    -- Check if player has reached their allowed drone count
-    if get_active_drone_count(player) >= get_allowed_drone_count(player) then
+    -- Check if player has reached their allowed drone count (including pending requests)
+    local active_and_pending = get_active_drone_count(player) + (data.request_count[player.index] or 0)
+    if active_and_pending >= get_allowed_drone_count(player) then
         return
     end
 

@@ -23,7 +23,7 @@ data:extend({
         effects = {},
         prerequisites = prereq,  -- Adjust prerequisites as needed (e.g., based on your mod's tech tree)
         unit = {
-            count = 100,  -- Research cost in science packs
+            count = 1000,  -- Research cost in science packs
             ingredients = ingredients,
             time = 60  -- Time in seconds
         },
@@ -32,16 +32,15 @@ data:extend({
 })
 
 local tech_data = {
-    [0] = {ingredients = {"automation-science-pack", 1}},
-    [1] = {prereq = {"logistic-science-pack"}, ingredients = {{"automation-science-pack", 1}, {"logistic-science-pack"}}, count = 100},
-    [2] = {prereq = {"logistic-science-pack"}, ingredients = {{"automation-science-pack", 1}, {"logistic-science-pack"}}, count = 100},
-    [3] = {prereq = {"logistic-science-pack"}, ingredients = {{"automation-science-pack", 1}, {"logistic-science-pack"}}, count = 100},
-    [4] = {prereq = {"chemical-science-pack"}, ingredients = {{"automation-science-pack", 1}, {"chemical-science-pack", 1}}, count = 200},
-    [5] = {prereq = {"chemical-science-pack"}, ingredients = {{"automation-science-pack", 1}, {"chemical-science-pack", 1}}, count = 200},
-    [6] = {prereq = {"chemical-science-pack"}, ingredients = {{"automation-science-pack", 1}, {"chemical-science-pack", 1}}, count = 200},
-    [7] = {prereq = {"space-science-pack"}, ingredients = {{"automation-science-pack", 1}, {"space-science-pack", 1}}, count = 400},
-    [8] = {prereq = {"space-science-pack"}, ingredients = {{"automation-science-pack", 1}, {"space-science-pack", 1}}, count = 400},
-    [9] = {prereq = {"space-science-pack"}, ingredients = {{"automation-science-pack", 1}, {"space-science-pack", 1}}, count = 400},
+    [1] = {prereq = {"logistic-science-pack"}, ingredients = {{"automation-science-pack", 1}, {"logistic-science-pack", 1}}, count = 100},
+    [2] = {prereq = {"construction_drone_count_1"}, ingredients = {{"automation-science-pack", 1}, {"logistic-science-pack", 1}}, count = 200},
+    [3] = {prereq = {"construction_drone_count_2"}, ingredients = {{"automation-science-pack", 1}, {"logistic-science-pack", 1}}, count = 400},
+    [4] = {prereq = {"chemical-science-pack"}, ingredients = {{"automation-science-pack", 1}, {"logistic-science-pack", 1}, {"chemical-science-pack", 1}}, count = 200},
+    [5] = {prereq = {"construction_drone_count_4"}, ingredients = {{"automation-science-pack", 1}, {"logistic-science-pack", 1}, {"chemical-science-pack", 1}}, count = 400},
+    [6] = {prereq = {"utility-science-pack"}, ingredients = {{"automation-science-pack", 1}, {"logistic-science-pack", 1}, {"chemical-science-pack", 1}, {"utility-science-pack", 1}}, count = 200},
+    [7] = {prereq = {"space-science-pack"}, ingredients = {{"automation-science-pack", 1}, {"logistic-science-pack", 1}, {"chemical-science-pack", 1}, {"utility-science-pack", 1}, {"space-science-pack", 1}}, count = 400},
+    [8] = {prereq = {"construction_drone_count_7"}, ingredients = {{"automation-science-pack", 1}, {"logistic-science-pack", 1}, {"chemical-science-pack", 1}, {"utility-science-pack", 1}, {"space-science-pack", 1}}, count = 600},
+    [9] = {prereq = {"construction_drone_count_8"}, ingredients = {{"automation-science-pack", 1}, {"logistic-science-pack", 1}, {"chemical-science-pack", 1}, {"utility-science-pack", 1}, {"space-science-pack", 1}}, count = 800},
 }
 
 local drone_tech = {
@@ -50,22 +49,23 @@ local drone_tech = {
     icon = drone_icon_location,
     icon_size = 128,
     effects = {},
-    prerequisites = {},  -- Adjust prerequisites as needed (e.g., based on your mod's tech tree)
+    prerequisites = {},
     unit = {
-        count = 100,  -- Research cost in science packs
+        count = 100,
         ingredients = { },
-        time = 60  -- Time in seconds
+        time = 60
     },
     order = "c-k-a"
 }
 
-for i = 1, 10 do
-    drone_tech.name = drone_tech.name .."count_"..i
-    drone_tech.prerequisites = tech_data[i].prereq
-    drone_tech.unit.ingredients = tech_data[i].ingredients
-    drone_tech.unit.count = tech_data[i].count
+for i = 1, 9 do
+    tech = table.deepcopy(drone_tech)
+    tech.name = tech.name .."count_"..i
+    tech.prerequisites = tech_data[i].prereq
+    tech.unit.ingredients = tech_data[i].ingredients
+    tech.unit.count = tech_data[i].count
     
-    data:extend({drone_tech})
+    data:extend({tech})
 end
 
 drone_tech.name = drone_tech.name .. "unlocked"
