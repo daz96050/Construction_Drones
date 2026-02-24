@@ -241,6 +241,51 @@ get_collision_mask = function(player)
     return collision_mask_to_use
 end
 
+get_allowed_drone_count = function(player)
+    local player_index = player.index
+
+    -- Check cache first
+    if drone_count_cache[player_index] ~= nil then
+        return drone_count_cache[player_index]
+    end
+
+    -- Compute the value
+    local allowed_count
+    if not is_tech_unlocked(player, "construction_drone_unlocked") then
+        allowed_count = 0
+    elseif is_tech_unlocked(player, "construction_drone_count_unlimited") then
+        allowed_count = math.huge  -- Use math.huge for infinity in Lua
+    else
+        allowed_count = 2
+        for i = 1, 10 do
+            if is_tech_unlocked(player, "construction_drone_count_"..i) then
+                allowed_count = allowed_count + 2
+            end
+        end
+    end
+
+    -- Store in cache and return
+    drone_count_cache[player_index] = allowed_count
+    return allowed_count
+end
+
+-- Add this function to clear cache for a player (call on tech changes)
+invalidate_drone_count_cache = function(player)
+    drone_count_cache[player.index] = nil
+end
+
+-- Get how many drones are currently active for a player (uses incremental counter)
+get_active_drone_count = function(player)
+    return data.active_drone_count[player.index] or 0
+end
+
+
+is_tech_unlocked = function(player, tech_name)
+    if player.force.technologies[tech_name] and player.force.technologies[tech_name].researched then
+        return true
+    end
+end
+
 inspect_item_properties = function(inspection, item)
     if inspection then game.print(inspection) end
     if not item then return end

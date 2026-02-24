@@ -92,6 +92,9 @@ make_player_drone = function(player)
     data.drone_commands = data.drone_commands or {}
     data.drone_commands[drone.unit_number] = drone_data
 
+    -- Increment active drone count for this player
+    data.active_drone_count[player.index] = (data.active_drone_count[player.index] or 0) + 1
+
     return drone
 end
 

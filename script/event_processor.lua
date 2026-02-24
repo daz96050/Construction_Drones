@@ -106,9 +106,7 @@ get_available_drones = function(player)
 end
 
 can_player_spawn_drones = function(player)
-    if not player.is_shortcut_toggled("construction-drone-toggle") then
-        return
-    end
+    if not player.is_shortcut_toggled("construction-drone-toggle") then return end
     local current_item_count = get_available_drones(player)
 
     local count = current_item_count - (data.request_count[player.index] or 0)
@@ -119,10 +117,7 @@ check_player_jobs = function(player)
     if not can_player_spawn_drones(player) then return end
     local queue = data.job_queue[player.index]
     if not queue then return end
-    local count = math.min(
-            5,
-            get_available_drones(player) - (data.request_count[player.index] or 0)
-    )
+    local count = math.min(5, get_available_drones(player) - (data.request_count[player.index] or 0))
 
     for _ = 1, count do
         local index, job = next(queue)
@@ -173,7 +168,7 @@ schedule_new_searches = function(event_tick)
     end
     if event_tick % search_refresh ~= 0 then return end
 
-    for k, player in pairs(game.connected_players) do
+    for _, player in pairs(game.connected_players) do
         local index = player.index
         if can_player_spawn_drones(player) and not next(data.job_queue[index] or {}) then
             for i, _ in pairs(search_offsets) do
@@ -295,7 +290,6 @@ on_script_path_request_finished = function(event)
         clear_extra_targets(drone_data)
         return
     end
-    --game.print("setting drone order")
     set_drone_order(drone, drone_data)
 end
 
@@ -342,12 +336,24 @@ end
 prune_commands = function()
     for unit_number, drone_data in pairs(data.drone_commands) do
         if not (drone_data.entity and drone_data.entity.valid) then
+            -- Decrement active drone count for this player
+            if drone_data.player then
+                data.active_drone_count[drone_data.player.index] = (data.active_drone_count[drone_data.player.index] or 1) - 1
+            end
             data.drone_commands[unit_number] = nil
             local proxy_chest = data.proxy_chests[unit_number]
             if proxy_chest then
                 proxy_chest.destroy()
                 data.proxy_chests[unit_number] = nil
             end
+        end
+    end
+end
+
+on_research_finished = function(event)
+    for _, player in pairs(game.players) do
+        if player.force == event.research.force then
+            invalidate_drone_count_cache(player)
         end
     end
 end
@@ -368,6 +374,8 @@ lib.events = {
     [defines.events.on_player_banned] = on_player_left_game,
     [defines.events.on_player_kicked] = on_player_left_game,
     [defines.events.on_pre_player_removed] = on_player_left_game,
+    
+    [defines.events.on_research_finished] = on_research_finished,
 
     [defines.events.on_ai_command_completed] = on_ai_command_completed,
     [defines.events.on_entity_cloned] = on_entity_cloned,

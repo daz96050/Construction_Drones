@@ -106,8 +106,6 @@ check_upgrade = function(entity, player)
         upgrade_prototype = upgrade_prototype,
         item_to_place = item,
     }
-    --inspect_item_properties("upgrade pickup", drone_data.pickup)
-    --game.print("dispatching drone")
     make_path_request(drone_data, player, target)
 end
 
@@ -297,6 +295,11 @@ check_repair = function(entity, player)
 end
 
 check_job = function(player, job)
+    -- Check if player has reached their allowed drone count
+    if get_active_drone_count(player) >= get_allowed_drone_count(player) then
+        return
+    end
+
     if job.type == drone_orders.construct then
         check_ghost(job.entity, player)
         return
@@ -850,6 +853,10 @@ process_return_to_player_command = function(drone_data, force)
     if proxy_chest then
         proxy_chest.destroy()
         data.proxy_chests[unit_number] = nil
+    end
+    -- Decrement active drone count for this player
+    if drone_data.player then
+        data.active_drone_count[drone_data.player.index] = (data.active_drone_count[drone_data.player.index] or 1) - 1
     end
     data.drone_commands[unit_number] = nil
 
