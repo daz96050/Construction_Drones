@@ -55,7 +55,16 @@ data:extend({
         type = "bool-setting",
         name = "force-player-position-search",
         setting_type = "runtime-global",
-        default_value = false,
+        default_value = true,
         order = "c"
+    }
+    ,
+    {
+        type = "bool-setting",
+        name = "construction-drone-unlimited",
+        setting_type = "startup",
+        default_value = true,
+        order = "z",
+        description = "Allow unlimited construction drones by default and hide related technologies"
     }
 })

@@ -39,5 +39,6 @@ Agent behavior rules
 - Preserve existing public APIs: `storage` keys, remote interface names, and prototype names in `shared.lua`.
 - Use the project's require/import conventions and folder layout. Keep data-stage code separated from runtime.
 - For information about the Factorio modding API, refer to the official documentation: https://lua-api.factorio.com/latest.
+- For information about factorio's exsting data, refer to the github repo: https://github.com/wube/factorio-data/blob/master
 
 If anything above is unclear or you'd like more examples (events, `data:extend` prototype examples, or `deploy.ps1` usage), tell me which area to expand.

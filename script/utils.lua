@@ -243,6 +243,9 @@ end
 
 get_allowed_drone_count = function(player)
     local player_index = player.index
+    if settings and settings.startup and settings.startup["construction-drone-unlimited"] and settings.startup["construction-drone-unlimited"].value then
+        return math.huge
+    end
 
     -- Check cache first
     if data.drone_count_cache[player_index] ~= nil then
@@ -262,6 +265,17 @@ get_allowed_drone_count = function(player)
                 allowed_count = allowed_count + 2
             end
         end
+    end
+
+    -- Apply any force-level bonus computed in script (set on research or by startup)
+    local force_bonus = 0
+    if storage and storage.drone_force_bonus and storage.drone_force_bonus[player.force.index] then
+        force_bonus = storage.drone_force_bonus[player.force.index]
+    end
+    if force_bonus == math.huge then
+        allowed_count = math.huge
+    else
+        allowed_count = allowed_count + (force_bonus or 0)
     end
 
     -- Store in cache and return

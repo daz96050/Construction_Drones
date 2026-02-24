@@ -74,7 +74,7 @@ scan_for_nearby_jobs = function(player, area)
 
         if entity.to_be_deconstructed() then
             player_queue[index] = { type = drone_orders.deconstruct, entity = entity }
-            return truee
+            return true
         end
 
         if (entity.get_health_ratio() or 1) < 1 then
@@ -351,9 +351,57 @@ prune_commands = function()
 end
 
 on_research_finished = function(event)
+    local research = event.research
+    if not (research and research.valid and research.force) then return end
+    local force = research.force
+    -- If startup unlimited is enabled, ensure force bonus is infinite and invalidate caches
+    storage.drone_force_bonus = storage.drone_force_bonus or {}
+    local unlimited_startup = settings and settings.startup and settings.startup["construction-drone-unlimited"] and settings.startup["construction-drone-unlimited"].value
+    if unlimited_startup then
+        storage.drone_force_bonus[force.index] = math.huge
+    else
+        if force.technologies["construction_drone_count_unlimited"] and force.technologies["construction_drone_count_unlimited"].researched then
+            storage.drone_force_bonus[force.index] = math.huge
+        else
+            local bonus = 0
+            for i = 1, 9 do
+                if force.technologies["construction_drone_count_"..i] and force.technologies["construction_drone_count_"..i].researched then
+                    bonus = bonus + 2
+                end
+            end
+            storage.drone_force_bonus[force.index] = bonus
+        end
+    end
+
+    -- Invalidate per-player caches for players on this force
     for _, player in pairs(game.players) do
-        if player.force == event.research.force then
+        if player.force == force then
             invalidate_drone_count_cache(player)
+        end
+    end
+end
+
+setup_drone_force_bonus = function() 
+    -- Initialize force-level drone bonuses from existing research or startup setting
+    storage.drone_force_bonus = storage.drone_force_bonus or {}
+    local unlimited_startup = settings and settings.startup and settings.startup["construction-drone-unlimited"] and settings.startup["construction-drone-unlimited"].value
+    for _, force in pairs(game.forces) do
+        if unlimited_startup then
+            storage.drone_force_bonus[force.index] = math.huge
+        else
+            if force.technologies then
+                if force.technologies["construction_drone_count_unlimited"] and force.technologies["construction_drone_count_unlimited"].researched then
+                    storage.drone_force_bonus[force.index] = math.huge
+                else
+                    local bonus = 0
+                    for i = 1, 9 do
+                        if force.technologies["construction_drone_count_"..i] and force.technologies["construction_drone_count_"..i].researched then
+                            bonus = bonus + 2
+                        end
+                    end
+                    storage.drone_force_bonus[force.index] = bonus
+                end
+            end
         end
     end
 end
@@ -418,6 +466,7 @@ lib.on_init = function()
         end
     end
     setup_search_offsets(settings.global["throttling"].value or 1)
+    setup_drone_force_bonus()
 end
 
 lib.on_configuration_changed = function()

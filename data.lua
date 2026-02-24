@@ -58,17 +58,29 @@ local drone_tech = {
     order = "c-k-a"
 }
 
-for i = 1, 9 do
+-- Only create the construction drone technologies if the startup setting doesn't enable unlimited drones
+if not (settings and settings.startup and settings.startup["construction-drone-unlimited"] and settings.startup["construction-drone-unlimited"].value) then
+    for i = 1, 9 do
+        tech = table.deepcopy(drone_tech)
+        tech.name = tech.name .."count_"..i
+        tech.prerequisites = tech_data[i].prereq
+        tech.unit.ingredients = tech_data[i].ingredients
+        tech.unit.count = tech_data[i].count
+        data:extend({tech})
+    end
+
     tech = table.deepcopy(drone_tech)
-    tech.name = tech.name .."count_"..i
-    tech.prerequisites = tech_data[i].prereq
-    tech.unit.ingredients = tech_data[i].ingredients
-    tech.unit.count = tech_data[i].count
-    
+    tech.name = tech.name .."unlocked"
+    tech.prerequisites = {"automation"}
+    tech.unit.ingredients = {{"automation-science-pack", 1}}
+    data:extend({tech})
+
+    tech = table.deepcopy(drone_tech)
+    tech.name = tech.name.."count_" .."unlimited"
+    tech.prerequisites = {"construction_drone_count_9"}
+    tech.unit.ingredients = tech_data[9].ingredients
+    tech.unit.count = 1000
     data:extend({tech})
 end
 
-drone_tech.name = drone_tech.name .. "unlocked"
-drone_tech.prerequisites = {"electronics"}
-drone_tech.unit.ingredients = {{"automation-science-pack", 1}}
-data:extend({drone_tech})
+
