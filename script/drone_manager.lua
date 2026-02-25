@@ -255,11 +255,19 @@ move_to_order_target = function(drone_data, target)
         return true
     end
 
+    -- Track pathfinding attempts to prevent infinite loops
+    drone_data.move_attempts = (drone_data.move_attempts or 0) + 1
+    if drone_data.move_attempts > 3 then
+        logs.trace("Max move attempts reached, cancelling order")
+        cancel_drone_order(drone_data)
+        return
+    end
+
+    -- Use position-based movement instead of destination_entity for reliability
     drone.commandable.set_command {
         type = defines.command.go_to_location,
-        destination_entity = target,
-        radius = ((target == drone_data.character and 0) or get_radius(drone, ranges.interact)) +
-                get_radius(target, nil, true),
+        destination = target.position,
+        radius = get_radius(drone, ranges.interact) + get_radius(target, nil, true),
         distraction = defines.distraction.none,
         pathfind_flags = drone_pathfind_flags,
     }

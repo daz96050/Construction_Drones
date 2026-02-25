@@ -196,6 +196,7 @@ end
 on_ai_command_completed = function(event)
     local drone_data = data.drone_commands[event.unit_number]
     if drone_data then
+        drone_data.move_attempts = 0  -- Reset attempts on successful movement
         return process_drone_command(drone_data, event.result)
     end
 end
@@ -283,11 +284,21 @@ on_script_path_request_finished = function(event)
     data.request_count[index] = (data.request_count[index] or 0) - 1
 
     if not event.path then
+        logs.debug("Path request failed, clearing target")
         clear_target(drone_data)
         clear_extra_targets(drone_data)
+        -- Increment retry counter instead of immediate cancellation
+        drone_data.retry_count = (drone_data.retry_count or 0) + 1
+        if drone_data.retry_count > 2 then
+            cancel_drone_order(drone_data)
+        else
+            -- Re-queue the job for retry
+            process_drone_command(drone_data)
+        end
         return
     end
 
+    drone_data.retry_count = 0  -- Reset on success
     local drone = make_player_drone(player)
     if not drone then
         logs.debug("Could not create drone")
@@ -295,7 +306,6 @@ on_script_path_request_finished = function(event)
         clear_extra_targets(drone_data)
         return
     end
-    --game.print("setting drone order")
     set_drone_order(drone, drone_data)
 end
 
