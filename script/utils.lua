@@ -234,7 +234,7 @@ use_spectral_drones = function(player)
 end
 
 get_collision_mask = function(player)
-    local collision_mask_to_use = shared.collision_mask
+    local collision_mask_to_use = shared.default_collision_mask
     if player.force.technologies["spectral-drones"] and player.force.technologies["spectral-drones"].researched then
         collision_mask_to_use = shared.spectral_collision_mask 
     end

@@ -26,12 +26,17 @@ data.drone_quality = {
 }
 data.units = { construction_drone = "Construction_Drone" }
 data.bounding_box = { { -0.01, -0.01 }, { 0.01, 0.01 } }
-data.collision_mask = { not_colliding_with_itself = true, consider_tile_transitions = true, layers = {
-    object = true
+data.default_collision_mask = { not_colliding_with_itself = true, consider_tile_transitions = true, layers = {
+    object = true,
+    water_tile = true,
+    lava_tile = true,
+    elevated_rail=true,
+    cliff = true
 }}
-data.spectral_collision_mask = { not_colliding_with_itself = true, colliding_with_tiles_only = true, layers = {}}
-
-data.technologies = { construction_drone_system = "Construction Drone System" }
+data.spectral_collision_mask = { not_colliding_with_itself = true, colliding_with_tiles_only = true, layers = {
+    water_tile = true,
+    lava_tile = true
+}}
 
 data.entities = {
     logistic_beacon = "Logistic_Beacon",
