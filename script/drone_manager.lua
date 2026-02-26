@@ -1,4 +1,3 @@
-local logs = require("logs")
 local random = math.random
 local insert = table.insert
 

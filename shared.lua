@@ -27,11 +27,7 @@ data.drone_quality = {
 data.units = { construction_drone = "Construction_Drone" }
 data.bounding_box = { { -0.01, -0.01 }, { 0.01, 0.01 } }
 data.default_collision_mask = { not_colliding_with_itself = true, consider_tile_transitions = true, layers = {
-    item = true,
-    water_tile = true,
-    lava_tile = true,
-    elevated_rail=true,
-    cliff = true
+    construction_drone = true
 }}
 data.spectral_collision_mask = { not_colliding_with_itself = true, colliding_with_tiles_only = true, layers = {
     water_tile = true,

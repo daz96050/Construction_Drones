@@ -1,4 +1,3 @@
-local logs = require("logs")
 local unit_data = require("shared")
 local insert = table.insert
 

@@ -18,4 +18,11 @@ logs.debug = function(string)
     end
 end
 
+logs.info = function(string)
+    if use_console then
+        game.print(string)
+    end
+    log(string)
+end
+
 return logs;
