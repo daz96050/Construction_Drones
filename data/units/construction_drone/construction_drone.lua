@@ -1,7 +1,6 @@
 local path = util.path("data/units/construction_drone/")
-local name = names.units.construction_drone
+local name = shared.units.construction_drone
 local qualities = table.deepcopy(data.raw["quality"])
-unit_data = require("shared")
 
 local scale = 1
 local default_collision_mask = { not_colliding_with_itself = true, consider_tile_transitions = true, layers = {item = true}}
@@ -66,7 +65,7 @@ local base_stats = {
             target_type = "entity",
             action = {
                 type = "direct",
-                action_delivery = { type = "beam", beam = names.beams.attack, max_length = 40, duration = 45 },
+                action_delivery = { type = "beam", beam = shared.beams.attack, max_length = 40, duration = 45 },
             },
         },
         sound = nil,
@@ -172,7 +171,7 @@ local recipe = {
     },
 }
 
-local proxy_chest_name = names.entities.construction_drone_proxy_chest
+local proxy_chest_name = shared.entities.construction_drone_proxy_chest
 local proxy_chest = util.copy(data.raw.container["wooden-chest"])
 proxy_chest.name = proxy_chest_name
 proxy_chest.localised_name = proxy_chest_name
@@ -261,7 +260,7 @@ local beam_base = {
 beam_base = util.copy(data.raw.beam["laser-beam"])
 beam_base.damage_interval = 10000
 
-local beams = names.beams
+local beams = shared.beams
 
 local build_beam = util.copy(beam_base)
 util.recursive_hack_tint(build_beam, { g = 1 })
@@ -298,14 +297,14 @@ for quality_name, quality_value in pairs(qualities) do
     if(quality_name ~= "quality-unknown") then
         local quality_unit = table.deepcopy(unit)
         quality_unit.name = quality_name.."-"..unit.name
-        quality_unit.collision_mask = default_collision_mask
-        local quality_data = unit_data.drone_quality[quality_value.name]
+        quality_unit.collision_mask = shared.default_collision_mask
+        local quality_data = shared.drone_quality[quality_value.name]
         quality_unit.movement_speed = quality_data.movement_speed
         quality_unit.max_health = quality_data.max_health
         
         local spectral_quality_unit = table.deepcopy(quality_unit)
         spectral_quality_unit.name = spectral_quality_unit.name.."_spectral"
-        spectral_quality_unit.collision_mask = spectral_collision_mask
+        spectral_quality_unit.collision_mask = shared.spectral_collision_mask
         data:extend { quality_unit, spectral_quality_unit }
     end
 end

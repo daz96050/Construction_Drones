@@ -1,7 +1,6 @@
 local logs = require("logs")
 local random = math.random
 local insert = table.insert
-local shared = require("shared")
 
 make_path_request = function(drone_data, player, target)
     local collision_mask_to_use = get_collision_mask(player)
@@ -61,7 +60,7 @@ make_player_drone = function(player)
     end
 
     -- Remove a drone from the player's inventory
-    local to_remove = { name = names.units.construction_drone, count = 1, quality = drone_to_use.quality }
+    local to_remove = { name = shared.units.construction_drone, count = 1, quality = drone_to_use.quality }
     logs.debug("drone to remove from character: " .. serpent.block(to_remove))
     local removed = player.character.remove_item(to_remove)
     if removed == 0 then

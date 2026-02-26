@@ -1,10 +1,10 @@
-beams = names.beams
-proxy_name = names.entities.construction_drone_proxy_chest
+beams = shared.beams
+proxy_name = shared.entities.construction_drone_proxy_chest
 trace_enabled = false
 debug_enabled = false
 use_console = false
 
-drone_prototypes = { [names.units.construction_drone] = { interact_range = 5, return_to_character_range = -1 } }
+drone_prototypes = { [shared.units.construction_drone] = { interact_range = 5, return_to_character_range = -1 } }
 
 ghost_type = "entity-ghost"
 tile_ghost_type = "tile-ghost"
