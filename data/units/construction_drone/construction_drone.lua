@@ -3,8 +3,6 @@ local name = shared.units.construction_drone
 local qualities = table.deepcopy(data.raw["quality"])
 
 local scale = 1
-local default_collision_mask = { not_colliding_with_itself = true, consider_tile_transitions = true, layers = {item = true}}
-local spectral_collision_mask = { not_colliding_with_itself = true, colliding_with_tiles_only = true, layers = {}}
 
 local animation = {
     layers = {
