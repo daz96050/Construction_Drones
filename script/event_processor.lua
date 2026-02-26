@@ -97,10 +97,10 @@ get_available_drones = function(player)
     local drone_count = 0
     if script.active_mods["quality"] then
         for quality, _ in pairs(unit_data.drone_quality) do
-            drone_count = drone_count + player.get_item_count({name = names.units.construction_drone, quality = quality})
+            drone_count = drone_count + player.get_item_count({name = shared.units.construction_drone, quality = quality})
         end
     else
-        drone_count = player.get_item_count({name = names.units.construction_drone})
+        drone_count = player.get_item_count({name = shared.units.construction_drone})
     end
     return drone_count
 end

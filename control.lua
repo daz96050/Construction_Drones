@@ -1,5 +1,5 @@
 handler = require("event_handler")
-names = require("shared")
+shared = require("shared")
 util = require("script/script_util")
 require("script/inventory_manager")
 require("script/command_processor")
