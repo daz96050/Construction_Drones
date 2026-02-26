@@ -817,17 +817,12 @@ end
 
 process_return_to_player_command = function(drone_data, force)
     local player = drone_data.player
-    if not (player and player.valid) then --does the player exist
+    if not (player and player.valid) or not player.connected then --does the player exist
         return cancel_drone_order(drone_data)
     end
 
     if not (force or move_to_player(drone_data, player)) then return end -- attempt to move to the player
 
-    --Now that we're at the player (we think), check they still exist, they might have logged off
-    if not player.valid then
-        cancel_drone_order(drone_data)
-        return 
-    end
     local inventory = get_drone_inventory(drone_data)
     transfer_inventory(inventory, player.character)
 
@@ -860,7 +855,7 @@ process_drone_command = function(drone_data, result)
     local drone = drone_data.entity
     if not (drone and drone.valid) then return end
 
-    drone.speed = 0.2
+    --drone.speed = 0.2
 
     if (result == defines.behavior_result.fail) then
          --game.print("Fail")
@@ -875,6 +870,11 @@ process_drone_command = function(drone_data, result)
     if drone_data.dropoff then
          logs.debug("Dropoff")
         return process_dropoff_command(drone_data)
+    end
+    
+    if not drone_data.order and drone_data.player then
+        logs.debug("No order, returning to player")
+        return process_return_to_player_command(drone_data)
     end
 
     if drone_data.order == drone_orders.construct then
@@ -907,9 +907,7 @@ process_drone_command = function(drone_data, result)
         return process_deconstruct_cliff_command(drone_data)
     end
 
-    logs.debug("No matching drone orders found in drone data")
-    logs.debug("No matching drone orders found in drone data: " .. serpent.block(drone_data))
-    find_a_player(drone_data)
+    logs.trace("No matching drone orders found in drone data: " .. serpent.block(drone_data))
 
     if drone_data.player then
         return process_return_to_player_command(drone_data)

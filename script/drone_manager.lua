@@ -221,6 +221,11 @@ cancel_drone_order = function(drone_data, on_removed)
     drone_data.dropoff = nil
     drone_data.order = nil
     drone_data.target = nil
+    
+    if not drone_data.player.connected then
+        logs.debug("Player is disconnected, waiting indefinitely")
+        return drone_wait(drone_data, math.huge)
+    end
 
     if not find_a_player(drone_data) then
         return drone_wait(drone_data, random(30, 300))
@@ -266,8 +271,9 @@ move_to_order_target = function(drone_data, target)
     -- Use position-based movement instead of destination_entity for reliability
     drone.commandable.set_command {
         type = defines.command.go_to_location,
-        destination = target.position,
-        radius = get_radius(drone, ranges.interact) + get_radius(target, nil, true),
+        destination_entity = target,
+        radius = ((target == drone_data.character and 0) or get_radius(drone, ranges.interact)) +
+                get_radius(target, nil, true),
         distraction = defines.distraction.none,
         pathfind_flags = drone_pathfind_flags,
     }

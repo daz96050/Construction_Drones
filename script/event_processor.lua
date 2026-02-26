@@ -362,6 +362,24 @@ prune_commands = function()
     end
 end
 
+on_player_connected = function(event)
+    local player = game.players[event.player_index]
+    if not player then return end
+
+    local drone_commands = data.drone_commands
+    if not drone_commands then return end
+
+    for unit_number, drone_data in pairs(drone_commands) do
+        if drone_data.player and drone_data.player.index == player.index then
+            -- Reset drone to return to player if it has no active job
+            if not (drone_data.pickup and drone_data.dropoff and drone_data.order)  then
+                logs.debug("Player reconnected, resetting drone " .. unit_number .. " to return")
+                process_return_to_player_command(drone_data)
+            end
+        end
+    end
+end
+
 local lib = {}
 
 lib.events = {
@@ -377,6 +395,7 @@ lib.events = {
     [defines.events.on_player_left_game] = on_player_left_game,
     [defines.events.on_player_banned] = on_player_left_game,
     [defines.events.on_player_kicked] = on_player_left_game,
+    [defines.events.on_player_joined_game] = on_player_connected,
     [defines.events.on_pre_player_removed] = on_player_left_game,
 
     [defines.events.on_ai_command_completed] = on_ai_command_completed,

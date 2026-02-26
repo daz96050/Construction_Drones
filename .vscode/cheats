@@ -11,7 +11,11 @@ game.map_settings.pollution.enabled = false
 game.player.clear_items_inside()
 game.player.surface.always_day=true
 remote.call("construction_drone", "debug", true)
+remote.call("construction_drone", "console", true)
+
 remote.call("construction_drone", "trace", true)
 remote.call("construction_drone", "console", true)
+
+remote.call("construction_drone", "dump")
 
 --disable-audio --load-game _autosave1 --disable-migration-window
