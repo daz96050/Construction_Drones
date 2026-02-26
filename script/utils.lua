@@ -1,5 +1,3 @@
-local logs = require("logs")
-local shared = require("shared")
 local sin, cos = math.sin, math.cos
 local angle = util.angle
 local floor = math.floor

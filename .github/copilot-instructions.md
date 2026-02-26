@@ -12,7 +12,7 @@ Quick architecture summary
 Key components & integration points
 - `control.lua` registers libraries via `handler.add_lib(require(...))`. New event modules must export a `lib` table with `events` and/or lifecycle hooks (`on_init`, `on_load`, `on_configuration_changed`) — example: [script/event_processor.lua](script/event_processor.lua#L300-L320).
 - Persistence: runtime state is stored on `storage`, e.g. `storage.construction_drone` is used in `on_load`/`on_init` patterns (see [script/event_processor.lua](script/event_processor.lua#L320-L340)).
-- Prototype/name sharing: use values from [shared.lua](shared.lua#L1-L40) (e.g., `names.units.construction_drone`) instead of hardcoding strings.
+- Prototype/name sharing: use values from [shared.lua](shared.lua#L1-L40) (e.g., `shared.units.construction_drone`) instead of hardcoding strings.
 
 Project-specific conventions
 - Module requires: uses relative require paths like `require("script/utils")` and `require("data/tf_util/tf_util")` — maintain this layout.

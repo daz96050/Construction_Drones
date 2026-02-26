@@ -1,4 +1,3 @@
-local logs = require("logs")
 get_proxy_chest = function(drone)
     local index = drone.unit_number
     local proxy_chest = data.proxy_chests[index]

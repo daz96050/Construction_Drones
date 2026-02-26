@@ -1,6 +1,7 @@
 handler = require("event_handler")
 shared = require("shared")
 util = require("script/script_util")
+logs = require("script/logs")
 require("script/inventory_manager")
 require("script/command_processor")
 require("script/drone_manager")

@@ -1,4 +1,3 @@
-local logs = require("logs")
 local random = math.random
 check_ghost = function(entity, player)
     if not (entity and entity.valid) then return end
