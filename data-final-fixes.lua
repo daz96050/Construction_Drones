@@ -17,12 +17,31 @@ end
 -- have collisions with player and item here as a proxy to identify them. If this ever changes in the future, this might
 -- break :^)
 
+local prototype_ignore_list = {
+    ["kr-electric-mining-drill-mk2"] = true,
+    ["electric-mining-drill"] = true,
+    ["mining-drill"] = true,
+    ["bob-mining-drill-1"] = true,
+    ["bob-mining-drill-2"] = true,
+    ["bob-mining-drill-3"] = true,
+    ["bob-mining-drill-4"] = true,
+    ["bob-area-mining-drill-1"] = true,
+    ["bob-area-mining-drill-2"] = true,
+    ["bob-area-mining-drill-3"] = true,
+    ["bob-area-mining-drill-4"] = true,
+}
+
 for _, prototype in pairs(collision_mask_util.collect_prototypes_with_layer("player")) do
     local mask = collision_mask_util.get_mask(prototype)
-    if (mask.layers and mask.layers["item"]) and (mods['Krastorio2-spaced-out'] and prototype.name ~= 'kr-electric-mining-drill-mk2') then
+    if (mask.layers and mask.layers["item"]) then
+        if prototype_ignore_list[prototype.name] then
+            log("Ignoring " .. prototype.name .. " for drone collision mask addition")
+            goto continue
+        end
         mask.layers[drone_collision_mask] = true
         prototype.collision_mask = mask
         log("Added drone collision layer to " .. prototype.name)
         log("prototype mask " .. serpent.block(prototype.collision_mask))
+        ::continue::
     end
 end

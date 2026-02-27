@@ -5,7 +5,7 @@ data.drones = {}
 data.drone_quality = {
     ["normal"] = {
         max_health = 45,
-        movement_speed = 0.16
+        movement_speed = 0.2
     },
     ["uncommon"] = {
         max_health = 60,
@@ -35,13 +35,8 @@ data.spectral_collision_mask = { not_colliding_with_itself = true, colliding_wit
 }}
 
 data.entities = {
-    logistic_beacon = "Logistic_Beacon",
-    simple_storage_chest = "Simple_Storage_Chest",
-    simple_provider_chest = "Simple_Provider_Chest",
     construction_drone_proxy_chest = "Construction_Drone_Proxy_Chest",
 }
-
-data.equipment = { drone_port = "Personal Drone Port" }
 
 data.beams = {
     build = "Build_beam",
