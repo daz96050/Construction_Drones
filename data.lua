@@ -22,7 +22,7 @@ data:extend({
         effects = {},
         prerequisites = prereq,  -- Adjust prerequisites as needed (e.g., based on your mod's tech tree)
         unit = {
-            count = 100,  -- Research cost in science packs
+            count = 1000,  -- Research cost in science packs
             ingredients = ingredients,
             time = 60  -- Time in seconds
         },

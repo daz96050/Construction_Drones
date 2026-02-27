@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.2
+Date: 27 February 2026
+  Bugfix:
+    - Fixed crash related to Bobs mods and collision masks
+---------------------------------------------------------------------------------------------------
+Version: 1.1.1
+Date: 27 February 2026
+  Bugfix:
+    - Fixed crash related to K2SO and collision masks
+---------------------------------------------------------------------------------------------------
 Version: 1.1.0
 Date: 25 February 2026
   Bugfix:
