@@ -816,7 +816,7 @@ end
 
 process_return_to_player_command = function(drone_data, force)
     local player = drone_data.player
-    if not (player and player.valid) or not player.connected then --does the player exist
+    if not (player and player.valid) or (player and player.valid and not player.connected) then --does the player exist
         return cancel_drone_order(drone_data)
     end
 
