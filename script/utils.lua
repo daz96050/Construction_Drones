@@ -25,6 +25,7 @@ get_prototype = function(name)
 end
 
 getPlayerSurface = function(player)
+    if not player or not player.valid then return nil end
     if player.controller_type == defines.controllers.remote then -- remote map view
         return player.physical_surface
     else

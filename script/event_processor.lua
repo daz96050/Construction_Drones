@@ -363,7 +363,7 @@ end
 
 on_player_connected = function(event)
     local player = game.players[event.player_index]
-    if not player then return end
+    if not player and player.valid then return end
 
     local drone_commands = data.drone_commands
     if not drone_commands then return end
