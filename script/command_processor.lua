@@ -823,9 +823,9 @@ process_return_to_player_command = function(drone_data, force)
     if not (force or move_to_player(drone_data, player)) then return end -- attempt to move to the player
 
     --Now that we're at the player (we think), check they still exist, they might have logged off
-    if not player.valid then
+    if not player.valid or not player.character then
         cancel_drone_order(drone_data)
-        return 
+        return
     end
     local inventory = get_drone_inventory(drone_data)
     transfer_inventory(inventory, player.character)
@@ -908,9 +908,8 @@ process_drone_command = function(drone_data, result)
 
     logs.debug("No matching drone orders found in drone data")
     logs.debug("No matching drone orders found in drone data: " .. serpent.block(drone_data))
-    find_a_player(drone_data)
 
-    if drone_data.player then
+    if find_a_player(drone_data) then
         return process_return_to_player_command(drone_data)
     end
 

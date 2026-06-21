@@ -193,6 +193,15 @@ on_tick = function(event)
 end
 
 on_ai_command_completed = function(event)
+    -- Skip processing for parked drones (player disconnected)
+    if data.parked_drones[event.unit_number] then
+        local drone_data = data.drone_commands[event.unit_number]
+        if drone_data then
+            park_drone(drone_data)
+        end
+        return
+    end
+
     local drone_data = data.drone_commands[event.unit_number]
     if drone_data then
         drone_data.move_attempts = 0  -- Reset attempts on successful movement
@@ -217,6 +226,9 @@ on_entity_removed = function(event)
     if drone_data then
         cancel_drone_order(drone_data, true)
     end
+
+    -- Clean up parked state if this drone was parked
+    data.parked_drones[unit_number] = nil
 
     local proxy_chest = data.proxy_chests[unit_number]
     if proxy_chest and proxy_chest.valid then
@@ -352,6 +364,7 @@ prune_commands = function()
     for unit_number, drone_data in pairs(data.drone_commands) do
         if not (drone_data.entity and drone_data.entity.valid) then
             data.drone_commands[unit_number] = nil
+            data.parked_drones[unit_number] = nil
             local proxy_chest = data.proxy_chests[unit_number]
             if proxy_chest then
                 proxy_chest.destroy()
@@ -363,20 +376,10 @@ end
 
 on_player_connected = function(event)
     local player = game.players[event.player_index]
-    if not player and player.valid then return end
+    if not (player and player.valid) then return end
 
-    local drone_commands = data.drone_commands
-    if not drone_commands then return end
-
-    for unit_number, drone_data in pairs(drone_commands) do
-        if drone_data.player and drone_data.player.index == player.index then
-            -- Reset drone to return to player if it has no active job
-            if not (drone_data.pickup and drone_data.dropoff and drone_data.order)  then
-                logs.debug("Player reconnected, resetting drone " .. unit_number .. " to return")
-                process_return_to_player_command(drone_data)
-            end
-        end
-    end
+    -- Wake up all parked drones belonging to this player
+    unpark_player_drones(player)
 end
 
 local lib = {}
@@ -394,7 +397,7 @@ lib.events = {
     [defines.events.on_player_left_game] = on_player_left_game,
     [defines.events.on_player_banned] = on_player_left_game,
     [defines.events.on_player_kicked] = on_player_left_game,
-    --[defines.events.on_player_joined_game] = on_player_connected,
+    [defines.events.on_player_joined_game] = on_player_connected,
     [defines.events.on_pre_player_removed] = on_player_left_game,
 
     [defines.events.on_ai_command_completed] = on_ai_command_completed,
@@ -411,6 +414,9 @@ lib.events = {
 lib.on_load = function()
     data = storage.construction_drone or data
     storage.construction_drone = data
+
+    -- Migration: ensure parked_drones table exists for saves from older versions
+    data.parked_drones = data.parked_drones or {}
 
     on_runtime_mod_setting_changed()
 end

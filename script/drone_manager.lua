@@ -121,7 +121,7 @@ find_a_player = function(drone_data)
 
     -- Ensure the drone always targets the player who spawned it.
     local original_player = drone_data.player
-    if original_player and original_player.valid and original_player.physical_surface == drone.surface then
+    if original_player and original_player.valid and original_player.character and original_player.physical_surface == drone.surface then
         return true
     end
 
@@ -140,6 +140,35 @@ drone_wait = function(drone_data, ticks)
         distraction = defines.distraction.none,
         radius = get_radius(drone),
     }
+end
+
+park_drone = function(drone_data)
+    local drone = drone_data.entity
+    if not (drone and drone.valid) then return end
+    local unit_number = drone.unit_number
+    local player = drone_data.player
+    data.parked_drones[unit_number] = player and player.index or true
+    -- Issue a very long stop command so the drone doesn't trigger on_ai_command_completed frequently
+    drone.commandable.set_command {
+        type = defines.command.stop,
+        ticks_to_wait = 2147483647,
+        distraction = defines.distraction.none,
+        radius = get_radius(drone),
+    }
+end
+
+unpark_player_drones = function(player)
+    local player_index = player.index
+    for unit_number, parked_player_index in pairs(data.parked_drones) do
+        if parked_player_index == player_index then
+            data.parked_drones[unit_number] = nil
+            local drone_data = data.drone_commands[unit_number]
+            if drone_data and drone_data.entity and drone_data.entity.valid then
+                logs.debug("Unparking drone " .. unit_number .. " for reconnected player")
+                process_return_to_player_command(drone_data)
+            end
+        end
+    end
 end
 
 set_drone_idle = function(drone)
@@ -397,8 +426,8 @@ cancel_player_drone_orders = function(player)
             drone_data.order = nil
             drone_data.target = nil
 
-            -- Set the drone to idle and prevent it from reassuming old tasks
-            set_drone_idle(drone_data.entity)
+            -- Park the drone until the player reconnects
+            park_drone(drone_data)
         end
     end
 

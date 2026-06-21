@@ -53,6 +53,7 @@ data = {
     job_queue = {},
     already_targeted = {},
     search_queue = {},
+    parked_drones = {},
 }
 
 prototype_cache = {}
