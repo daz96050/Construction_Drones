@@ -19,6 +19,7 @@ end
 
 local prototype_ignore_list = {
     ["kr-electric-mining-drill-mk2"] = true,
+    ["kr-electric-mining-drill-mk3"] = true,
     ["electric-mining-drill"] = true,
     ["mining-drill"] = true,
     ["bob-mining-drill-1"] = true,

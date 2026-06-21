@@ -195,6 +195,7 @@ end
 on_ai_command_completed = function(event)
     local drone_data = data.drone_commands[event.unit_number]
     if drone_data then
+        drone_data.move_attempts = 0  -- Reset attempts on successful movement
         return process_drone_command(drone_data, event.result)
     end
 end
@@ -282,11 +283,21 @@ on_script_path_request_finished = function(event)
     data.request_count[index] = (data.request_count[index] or 0) - 1
 
     if not event.path then
+        logs.debug("Path request failed, clearing target")
         clear_target(drone_data)
         clear_extra_targets(drone_data)
+        -- Increment retry counter instead of immediate cancellation
+        drone_data.retry_count = (drone_data.retry_count or 0) + 1
+        if drone_data.retry_count > 2 then
+            cancel_drone_order(drone_data)
+        else
+            -- Re-queue the job for retry
+            process_drone_command(drone_data)
+        end
         return
     end
 
+    drone_data.retry_count = 0  -- Reset on success
     local drone = make_player_drone(player)
     if not drone then
         logs.debug("Could not create drone")
@@ -294,7 +305,6 @@ on_script_path_request_finished = function(event)
         clear_extra_targets(drone_data)
         return
     end
-    --game.print("setting drone order")
     set_drone_order(drone, drone_data)
 end
 
@@ -351,6 +361,24 @@ prune_commands = function()
     end
 end
 
+on_player_connected = function(event)
+    local player = game.players[event.player_index]
+    if not player and player.valid then return end
+
+    local drone_commands = data.drone_commands
+    if not drone_commands then return end
+
+    for unit_number, drone_data in pairs(drone_commands) do
+        if drone_data.player and drone_data.player.index == player.index then
+            -- Reset drone to return to player if it has no active job
+            if not (drone_data.pickup and drone_data.dropoff and drone_data.order)  then
+                logs.debug("Player reconnected, resetting drone " .. unit_number .. " to return")
+                process_return_to_player_command(drone_data)
+            end
+        end
+    end
+end
+
 local lib = {}
 
 lib.events = {
@@ -366,6 +394,7 @@ lib.events = {
     [defines.events.on_player_left_game] = on_player_left_game,
     [defines.events.on_player_banned] = on_player_left_game,
     [defines.events.on_player_kicked] = on_player_left_game,
+    --[defines.events.on_player_joined_game] = on_player_connected,
     [defines.events.on_pre_player_removed] = on_player_left_game,
 
     [defines.events.on_ai_command_completed] = on_ai_command_completed,
