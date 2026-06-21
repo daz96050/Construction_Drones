@@ -456,6 +456,57 @@ process_failed_command = function(drone_data)
     process_return_to_player_command(drone_data, true)
 end
 
+-- After deconstructing, check if nearby ghosts need items the drone is carrying.
+-- Returns a ghost entity and its build item if a chain job is found, nil otherwise.
+find_chain_construct_job = function(drone_data)
+    local player = drone_data.player
+    if not (player and player.valid) then return end
+
+    local chain_radius = settings.get_player_settings(player)["drone-chain-search-radius"].value
+    if chain_radius <= 0 then return end
+
+    local drone = drone_data.entity
+    if not (drone and drone.valid) then return end
+
+    local drone_inventory = get_drone_inventory(drone_data)
+    if drone_inventory.is_empty() then return end
+
+    -- Build a set of carried items keyed by "name:quality"
+    local carried_items = {}
+    for _, item in pairs(drone_inventory.get_contents()) do
+        local key = item.name .. ":" .. (item.quality or "normal")
+        carried_items[key] = (carried_items[key] or 0) + item.count
+    end
+
+    -- Search for nearby ghosts
+    local surface = drone.surface
+    local nearby_ghosts = surface.find_entities_filtered {
+        type = { "entity-ghost", "tile-ghost" },
+        position = drone.position,
+        radius = chain_radius,
+    }
+
+    for _, ghost in pairs(nearby_ghosts) do
+        local ghost_index = unique_index(ghost)
+        if not data.already_targeted[ghost_index] then
+            local items_to_place = ghost.ghost_prototype.items_to_place_this
+            if items_to_place then
+                local ghost_quality = ghost.quality
+                local quality_name = ghost_quality and ghost_quality.name or "normal"
+                for _, item in pairs(items_to_place) do
+                    local key = item.name .. ":" .. quality_name
+                    local carried = carried_items[key]
+                    if carried and carried >= item.count then
+                        data.already_targeted[ghost_index] = true
+                        item.quality = ghost_quality
+                        return ghost, item
+                    end
+                end
+            end
+        end
+    end
+end
+
 process_deconstruct_command = function(drone_data)
     -- print("Processing deconstruct command")
     local target = drone_data.target
@@ -521,7 +572,19 @@ process_deconstruct_command = function(drone_data)
     if extra_target then
         drone_data.target = extra_target
     else
-        drone_data.dropoff = {}
+        -- No more deconstruction targets — check for a nearby ghost we can chain into
+        local ghost, build_item = find_chain_construct_job(drone_data)
+        if ghost then
+            drone_data.order = drone_orders.construct
+            drone_data.target = ghost
+            drone_data.item_to_place = build_item
+            drone_data.item_place_count = build_item.count
+            drone_data.entity_ghost_name = ghost.ghost_name
+            drone_data.extra_targets = nil
+            drone_data.pickup = nil
+        else
+            drone_data.dropoff = {}
+        end
     end
 
     update_drone_sticker(drone_data)

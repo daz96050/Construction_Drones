@@ -5,23 +5,28 @@ data.drones = {}
 data.drone_quality = {
     ["normal"] = {
         max_health = 45,
-        movement_speed = 0.2
+        movement_speed = 0.2,
+        inventory_size = 4
     },
     ["uncommon"] = {
         max_health = 60,
-        movement_speed = 0.3
+        movement_speed = 0.3,
+        inventory_size = 6
     },
     ["rare"] = {
         max_health = 75,
-        movement_speed = 0.6
+        movement_speed = 0.6,
+        inventory_size = 8
     },
     ["epic"] = {
         max_health = 120,
-        movement_speed = 0.8
+        movement_speed = 0.8,
+        inventory_size = 12
     },
     ["legendary"] = {
         max_health = 240,
-        movement_speed = 1.2
+        movement_speed = 1.2,
+        inventory_size = 16
     }
 }
 data.units = { construction_drone = "Construction_Drone" }

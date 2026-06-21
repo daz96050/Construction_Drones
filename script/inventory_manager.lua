@@ -4,7 +4,9 @@ get_proxy_chest = function(drone)
     if proxy_chest and proxy_chest.valid then
         return proxy_chest
     end
-    local new = drone.surface.create_entity { name = proxy_name, position = proxy_position, force = drone.force }
+    local quality_name = drone.quality and drone.quality.name or "normal"
+    local chest_name = proxy_name .. "_" .. quality_name
+    local new = drone.surface.create_entity { name = chest_name, position = proxy_position, force = drone.force }
     data.proxy_chests[index] = new
     return new
 end

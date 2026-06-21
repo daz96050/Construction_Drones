@@ -170,13 +170,23 @@ local recipe = {
 }
 
 local proxy_chest_name = shared.entities.construction_drone_proxy_chest
-local proxy_chest = util.copy(data.raw.container["wooden-chest"])
-proxy_chest.name = proxy_chest_name
-proxy_chest.localised_name = proxy_chest_name
-proxy_chest.collision_box = nil
-proxy_chest.inventory_size = 4
-proxy_chest.order = "nnov"
-proxy_chest.next_upgrade = nil
+local proxy_chest_base = util.copy(data.raw.container["wooden-chest"])
+proxy_chest_base.name = proxy_chest_name
+proxy_chest_base.localised_name = proxy_chest_name
+proxy_chest_base.collision_box = nil
+proxy_chest_base.inventory_size = shared.drone_quality["normal"].inventory_size
+proxy_chest_base.order = "nnov"
+proxy_chest_base.next_upgrade = nil
+
+-- Create per-quality proxy chests with scaled inventory sizes
+local quality_proxy_chests = {}
+for quality_name, quality_data in pairs(shared.drone_quality) do
+    local quality_proxy = util.copy(proxy_chest_base)
+    quality_proxy.name = proxy_chest_name .. "_" .. quality_name
+    quality_proxy.localised_name = quality_proxy.name
+    quality_proxy.inventory_size = quality_data.inventory_size
+    table.insert(quality_proxy_chests, quality_proxy)
+end
 
 local beam_blend_mode = "additive"
 local beam_base = {
@@ -307,4 +317,5 @@ for quality_name, quality_value in pairs(qualities) do
     end
 end
 
-data:extend{item, recipe, proxy_chest, build_beam, deconstruct_beam, pickup_beam, attack_beam}
+data:extend{item, recipe, proxy_chest_base, build_beam, deconstruct_beam, pickup_beam, attack_beam}
+data:extend(quality_proxy_chests)

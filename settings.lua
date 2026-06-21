@@ -57,5 +57,14 @@ data:extend({
         setting_type = "runtime-global",
         default_value = false,
         order = "c"
+    },
+    {
+        type = "int-setting",
+        name = "drone-chain-search-radius",
+        setting_type = "runtime-per-user",
+        default_value = 8,
+        minimum_value = 0,
+        maximum_value = 32,
+        order = "e",
     }
 })
