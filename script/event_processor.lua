@@ -194,7 +194,7 @@ end
 
 on_ai_command_completed = function(event)
     -- Skip processing for parked drones (player disconnected)
-    if data.parked_drones[event.unit_number] then
+    if data.parked_drones and data.parked_drones[event.unit_number] then
         local drone_data = data.drone_commands[event.unit_number]
         if drone_data then
             park_drone(drone_data)
@@ -228,7 +228,9 @@ on_entity_removed = function(event)
     end
 
     -- Clean up parked state if this drone was parked
-    data.parked_drones[unit_number] = nil
+    if data.parked_drones then
+        data.parked_drones[unit_number] = nil
+    end
 
     local proxy_chest = data.proxy_chests[unit_number]
     if proxy_chest and proxy_chest.valid then
@@ -364,7 +366,9 @@ prune_commands = function()
     for unit_number, drone_data in pairs(data.drone_commands) do
         if not (drone_data.entity and drone_data.entity.valid) then
             data.drone_commands[unit_number] = nil
-            data.parked_drones[unit_number] = nil
+            if data.parked_drones then
+                data.parked_drones[unit_number] = nil
+            end
             local proxy_chest = data.proxy_chests[unit_number]
             if proxy_chest then
                 proxy_chest.destroy()
@@ -415,9 +419,6 @@ lib.on_load = function()
     data = storage.construction_drone or data
     storage.construction_drone = data
 
-    -- Migration: ensure parked_drones table exists for saves from older versions
-    data.parked_drones = data.parked_drones or {}
-
     on_runtime_mod_setting_changed()
 end
 
@@ -450,6 +451,7 @@ lib.on_configuration_changed = function()
     game.map_settings.path_finder.use_path_cache = false
     data.path_requests = data.path_requests or {}
     data.request_count = data.request_count or {}
+    data.parked_drones = data.parked_drones or {}
     prune_commands()
 
     if not data.set_default_shortcut then

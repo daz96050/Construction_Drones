@@ -11,8 +11,7 @@ check_ghost = function(entity, player)
     local surface = entity.surface
     local position = entity.position
 
-    local count = 0
-    local extra_targets = {}
+    local all_targets = {}
     local extra
     if entity.name == "tile-ghost"
     then
@@ -21,38 +20,53 @@ check_ghost = function(entity, player)
         extra = surface.find_entities_filtered { ghost_name = entity.ghost_name, position = position, quality = entity.quality.name, radius = 5 }
     end
     for _, ghost in pairs(extra) do
-        if count >= 8 then
-            break
-        end
         local unit_number = ghost.unit_number
         local should_check = not data.already_targeted[unit_number]
         if should_check and should_process_entity(entity, player, drone_orders.construct) then
             if ghost.ghost_name == entity.ghost_name and ghost.quality == entity.quality then
                 data.already_targeted[unit_number] = true
-                extra_targets[unit_number] = ghost
-                count = count + 1
+                table.insert(all_targets, ghost)
             end
         end
     end
 
+    if #all_targets == 0 then return end
+
+    -- Determine batch size from the smallest drone inventory
+    local batch_size = shared.drone_quality["normal"].inventory_size
     local origCount = item.count
-    item.count = item.count * count
 
-    local target = surface.get_closest(player.position, extra_targets)
-    extra_targets[target.unit_number] = nil
+    -- Sort by distance for efficient pathing within each batch
+    table.sort(all_targets, function(a, b)
+        local da = (a.position.x - position.x) ^ 2 + (a.position.y - position.y) ^ 2
+        local db = (b.position.x - position.x) ^ 2 + (b.position.y - position.y) ^ 2
+        return da < db
+    end)
 
-    local drone_data = {
-        player = player,
-        order = drone_orders.construct,
-        pickup = { stack = item },
-        target = target,
-        entity_ghost_name = entity.ghost_name,
-        item_to_place = item,
-        item_place_count = origCount,
-        extra_targets = extra_targets,
-    }
+    -- Split targets into batches and dispatch one drone per batch
+    for batch_start = 1, #all_targets, batch_size do
+        local batch_end = math.min(batch_start + batch_size - 1, #all_targets)
+        local batch_count = batch_end - batch_start + 1
+        local target = all_targets[batch_start]
+        local batch_extra = {}
+        for i = batch_start + 1, batch_end do
+            batch_extra[unique_index(all_targets[i])] = all_targets[i]
+        end
 
-    make_path_request(drone_data, player, target)
+        local batch_item = { name = item.name, count = origCount * batch_count, quality = item.quality }
+        local drone_data = {
+            player = player,
+            order = drone_orders.construct,
+            pickup = { stack = batch_item },
+            target = target,
+            entity_ghost_name = entity.ghost_name,
+            item_to_place = batch_item,
+            item_place_count = origCount,
+            extra_targets = batch_extra,
+        }
+
+        make_path_request(drone_data, player, target)
+    end
 end
 
 check_upgrade = function(entity, player)
@@ -197,8 +211,7 @@ check_deconstruction = function(entity, player)
     needed = needed - sent
 
     if needed <= 1 then
-        local extra_targets = {}
-        local count = 10
+        local all_targets = {}
 
         for _, nearby in pairs(surface.find_entities_filtered {
             name = entity.name,
@@ -206,34 +219,44 @@ check_deconstruction = function(entity, player)
             radius = 8,
             to_be_deconstructed = true,
         }) do
-            if count <= 0 then
-                break
-            end
             local nearby_index = unique_index(nearby)
             local should_check = not data.already_targeted[nearby_index]
             if should_check and should_process_entity(entity, player, drone_orders.deconstruct) then
                 data.already_targeted[nearby_index] = true
                 data.sent_deconstruction[nearby_index] = (data.sent_deconstruction[nearby_index] or 0) + 1
-                extra_targets[nearby_index] = nearby
-                count = count - 1
+                table.insert(all_targets, nearby)
             end
         end
 
-        local target = surface.get_closest(player.position, extra_targets)
-        if not target then
-            return
+        if #all_targets == 0 then return end
+
+        -- Sort by distance for efficient pathing within each batch
+        local pos = entity.position
+        table.sort(all_targets, function(a, b)
+            local da = (a.position.x - pos.x) ^ 2 + (a.position.y - pos.y) ^ 2
+            local db = (b.position.x - pos.x) ^ 2 + (b.position.y - pos.y) ^ 2
+            return da < db
+        end)
+
+        -- Split targets into batches and dispatch one drone per batch
+        local batch_size = shared.drone_quality["normal"].inventory_size
+        for batch_start = 1, #all_targets, batch_size do
+            local batch_end = math.min(batch_start + batch_size - 1, #all_targets)
+            local target = all_targets[batch_start]
+            local batch_extra = {}
+            for i = batch_start + 1, batch_end do
+                batch_extra[unique_index(all_targets[i])] = all_targets[i]
+            end
+
+            local drone_data = {
+                player = player,
+                order = drone_orders.deconstruct,
+                target = target,
+                extra_targets = batch_extra,
+            }
+
+            make_path_request(drone_data, player, target)
         end
-
-        extra_targets[unique_index(target)] = nil
-
-        local drone_data = {
-            player = player,
-            order = drone_orders.deconstruct,
-            target = target,
-            extra_targets = extra_targets,
-        }
-
-        make_path_request(drone_data, player, target)
         return
     end
 
@@ -511,6 +534,32 @@ process_deconstruct_command = function(drone_data)
     -- print("Processing deconstruct command")
     local target = drone_data.target
     if not (target and target.valid) then
+        -- If we're in chain linger mode, try finding a ghost again
+        if drone_data.chain_linger_remaining then
+            local ghost, build_item = find_chain_construct_job(drone_data)
+            if ghost then
+                drone_data.chain_linger_remaining = nil
+                drone_data.order = drone_orders.construct
+                drone_data.target = ghost
+                drone_data.item_to_place = build_item
+                drone_data.item_place_count = build_item.count
+                drone_data.entity_ghost_name = ghost.ghost_name
+                drone_data.extra_targets = nil
+                drone_data.pickup = nil
+                update_drone_sticker(drone_data)
+                return process_drone_command(drone_data)
+            end
+            -- Still no ghost — continue lingering or give up
+            local remaining = drone_data.chain_linger_remaining
+            if remaining > 0 then
+                local wait = math.min(remaining, 30)
+                drone_data.chain_linger_remaining = remaining - wait
+                return drone_wait(drone_data, wait)
+            end
+            drone_data.chain_linger_remaining = nil
+            drone_data.dropoff = {}
+            return process_drone_command(drone_data)
+        end
         return cancel_drone_order(drone_data)
     end
 
@@ -560,6 +609,20 @@ process_deconstruct_command = function(drone_data)
         if drone_inventory.is_empty() then
             return drone_wait(drone_data, 300)
         end
+        -- Inventory full — free remaining targets and try chaining into construction
+        clear_extra_targets(drone_data)
+        drone_data.extra_targets = nil
+        local ghost, build_item = find_chain_construct_job(drone_data)
+        if ghost then
+            drone_data.order = drone_orders.construct
+            drone_data.target = ghost
+            drone_data.item_to_place = build_item
+            drone_data.item_place_count = build_item.count
+            drone_data.entity_ghost_name = ghost.ghost_name
+            drone_data.pickup = nil
+            update_drone_sticker(drone_data)
+            return process_drone_command(drone_data)
+        end
         cancel_drone_order(drone_data)
         return
     end
@@ -583,6 +646,25 @@ process_deconstruct_command = function(drone_data)
             drone_data.extra_targets = nil
             drone_data.pickup = nil
         else
+            -- No ghost found yet — linger if configured, to allow time for paste
+            local player = drone_data.player
+            local linger_time = 0
+            if player and player.valid then
+                linger_time = settings.get_player_settings(player)["drone-chain-linger-time"].value
+            end
+            local remaining = drone_data.chain_linger_remaining
+            if remaining == nil then
+                -- First attempt, initialize linger countdown
+                remaining = linger_time
+            end
+            if remaining > 0 then
+                local wait = math.min(remaining, 30)
+                drone_data.chain_linger_remaining = remaining - wait
+                update_drone_sticker(drone_data)
+                return drone_wait(drone_data, wait)
+            end
+            -- Linger expired, give up and return to player
+            drone_data.chain_linger_remaining = nil
             drone_data.dropoff = {}
         end
     end

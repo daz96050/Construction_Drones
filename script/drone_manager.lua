@@ -145,6 +145,7 @@ end
 park_drone = function(drone_data)
     local drone = drone_data.entity
     if not (drone and drone.valid) then return end
+    if not data.parked_drones then data.parked_drones = {} end
     local unit_number = drone.unit_number
     local player = drone_data.player
     data.parked_drones[unit_number] = player and player.index or true
@@ -158,6 +159,7 @@ park_drone = function(drone_data)
 end
 
 unpark_player_drones = function(player)
+    if not data.parked_drones then return end
     local player_index = player.index
     for unit_number, parked_player_index in pairs(data.parked_drones) do
         if parked_player_index == player_index then

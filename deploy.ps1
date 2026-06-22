@@ -1,5 +1,9 @@
 # PowerShell script to package and deploy the mod with forward slashes for cross-platform compatibility
 
+param(
+    [switch]$NoBump
+)
+
 # Get current directory as mod folder
 $modPath = $PSScriptRoot
 $infoJsonPath = Join-Path -Path $modPath -ChildPath "info.json"
@@ -8,6 +12,23 @@ $factorioModsPath = Join-Path -Path $env:APPDATA -ChildPath "Factorio\mods"
 
 # Load .NET assembly for zip creation
 Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+function Increment-PatchVersion {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Version
+    )
+
+    if ($Version -notmatch '^([0-9]+)\.([0-9]+)\.([0-9]+)$') {
+        throw "Version '$Version' is not in major.minor.patch format."
+    }
+
+    $major = [int]$Matches[1]
+    $minor = [int]$Matches[2]
+    $patch = [int]$Matches[3]
+
+    return "$major.$minor.$($patch + 1)"
+}
 
 # Function to validate and create the Factorio mods directory
 function Ensure-ModsDirectory {
@@ -37,8 +58,17 @@ try {
         Write-Error "Version field not found in info.json."
         exit 1
     }
+
+    if (-not $NoBump) {
+        $version = Increment-PatchVersion -Version $version
+        $info.version = $version
+        $info | ConvertTo-Json -Depth 100 | Set-Content -Path $infoJsonPath -Encoding UTF8
+        Write-Host "Bumped version to: $version"
+    } else {
+        Write-Host "Skipping version bump because -NoBump was specified."
+    }
 } catch {
-    Write-Error "Failed to parse info.json: $_"
+    Write-Error "Failed to parse or update info.json: $_"
     exit 1
 }
 $tempDir = Join-Path -Path $PSScriptRoot -ChildPath "temp_$modName"

@@ -66,5 +66,14 @@ data:extend({
         minimum_value = 0,
         maximum_value = 32,
         order = "e",
+    },
+    {
+        type = "int-setting",
+        name = "drone-chain-linger-time",
+        setting_type = "runtime-per-user",
+        default_value = 120,
+        minimum_value = 0,
+        maximum_value = 600,
+        order = "f",
     }
 })
