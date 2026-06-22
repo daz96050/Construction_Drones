@@ -327,8 +327,12 @@ on_construction_drone_toggle = function(event)
     local enabled = not player.is_shortcut_toggled("construction-drone-toggle")
     player.set_shortcut_toggled("construction-drone-toggle", enabled)
     if not enabled then
-        cancel_player_drone_orders(player)
+        -- Toggle OFF: force drones to return (they can be redirected if toggled back on)
+        return_player_drones(player)
         data.job_queue[event.player_index] = nil
+    else
+        -- Toggle ON: redirect any returning drones to nearby work
+        redirect_all_returning_drones(player)
     end
 end
 

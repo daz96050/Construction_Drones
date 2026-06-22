@@ -319,6 +319,11 @@ check_repair = function(entity, player)
 end
 
 check_job = function(player, job)
+    -- Try to redirect a returning drone before spawning a new one
+    if try_redirect_for_job(player, job) then
+        return
+    end
+
     if job.type == drone_orders.construct then
         check_ghost(job.entity, player)
         return
@@ -530,36 +535,141 @@ find_chain_construct_job = function(drone_data)
     end
 end
 
+-- Find a returning drone belonging to this player that is near the given position.
+-- Returns drone_data of the closest eligible drone, or nil.
+find_returning_drone_near = function(player, position, surface)
+    local redirect_radius = settings.get_player_settings(player)["drone-redirect-radius"].value
+    if redirect_radius <= 0 then return end
+
+    local best_drone_data = nil
+    local best_dist_sq = redirect_radius * redirect_radius
+
+    for _, drone_data in pairs(data.drone_commands) do
+        if drone_data.returning and drone_data.player == player then
+            local drone = drone_data.entity
+            if drone and drone.valid and drone.surface == surface then
+                local dx = drone.position.x - position.x
+                local dy = drone.position.y - position.y
+                local dist_sq = dx * dx + dy * dy
+                if dist_sq < best_dist_sq then
+                    best_dist_sq = dist_sq
+                    best_drone_data = drone_data
+                end
+            end
+        end
+    end
+
+    return best_drone_data
+end
+
+-- Redirect a returning drone to a new construction job.
+-- The drone must already have the needed items in its inventory.
+redirect_drone_to_construct = function(drone_data, ghost, build_item)
+    drone_data.returning = nil
+    drone_data.dropoff = nil
+    drone_data.order = drone_orders.construct
+    drone_data.target = ghost
+    drone_data.item_to_place = build_item
+    drone_data.item_place_count = build_item.count
+    drone_data.entity_ghost_name = ghost.ghost_name
+    drone_data.extra_targets = nil
+    drone_data.pickup = nil
+    data.already_targeted[unique_index(ghost)] = true
+    update_drone_sticker(drone_data)
+    return process_drone_command(drone_data)
+end
+
+-- Redirect a returning drone to a new deconstruction job.
+redirect_drone_to_deconstruct = function(drone_data, entity)
+    drone_data.returning = nil
+    drone_data.dropoff = nil
+    drone_data.order = drone_orders.deconstruct
+    drone_data.target = entity
+    drone_data.extra_targets = nil
+    drone_data.pickup = nil
+    data.already_targeted[unique_index(entity)] = true
+    update_drone_sticker(drone_data)
+    return process_drone_command(drone_data)
+end
+
+-- Try to redirect a returning drone to handle a job instead of spawning a new drone.
+-- Returns true if a drone was successfully redirected.
+try_redirect_for_job = function(player, job)
+    local entity = job.entity
+    if not (entity and entity.valid) then return false end
+
+    local drone_data = find_returning_drone_near(player, entity.position, entity.surface)
+    if not drone_data then return false end
+
+    if job.type == drone_orders.deconstruct then
+        if entity.to_be_deconstructed() then
+            redirect_drone_to_deconstruct(drone_data, entity)
+            return true
+        end
+    elseif job.type == drone_orders.construct then
+        -- Can only redirect if the drone carries the needed items
+        local drone_inventory = get_drone_inventory(drone_data)
+        if not drone_inventory.is_empty() then
+            local items_to_place = entity.ghost_prototype.items_to_place_this
+            if items_to_place then
+                local ghost_quality = entity.quality
+                local quality_name = ghost_quality and ghost_quality.name or "normal"
+                for _, item in pairs(items_to_place) do
+                    local key = item.name .. ":" .. quality_name
+                    local count = drone_inventory.get_item_count({name = item.name, quality = ghost_quality})
+                    if count >= item.count then
+                        item.quality = ghost_quality
+                        redirect_drone_to_construct(drone_data, entity, item)
+                        return true
+                    end
+                end
+            end
+        end
+    end
+
+    return false
+end
+
+-- Redirect all returning drones for a player to nearby work.
+-- Called when the construction toggle is re-enabled.
+redirect_all_returning_drones = function(player)
+    local player_index = player.index
+    local redirect_radius = settings.get_player_settings(player)["drone-redirect-radius"].value
+    if redirect_radius <= 0 then return end
+
+    for _, drone_data in pairs(data.drone_commands) do
+        if drone_data.returning and drone_data.player == player then
+            local drone = drone_data.entity
+            if drone and drone.valid then
+                -- First try chain construct (drone has items from decon)
+                local ghost, build_item = find_chain_construct_job(drone_data)
+                if ghost then
+                    redirect_drone_to_construct(drone_data, ghost, build_item)
+                else
+                    -- Look for nearby deconstruction jobs
+                    local surface = drone.surface
+                    local nearby = surface.find_entities_filtered {
+                        position = drone.position,
+                        radius = redirect_radius,
+                        to_be_deconstructed = true,
+                    }
+                    for _, entity in pairs(nearby) do
+                        local index = unique_index(entity)
+                        if not data.already_targeted[index] then
+                            redirect_drone_to_deconstruct(drone_data, entity)
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
 process_deconstruct_command = function(drone_data)
     -- print("Processing deconstruct command")
     local target = drone_data.target
     if not (target and target.valid) then
-        -- If we're in chain linger mode, try finding a ghost again
-        if drone_data.chain_linger_remaining then
-            local ghost, build_item = find_chain_construct_job(drone_data)
-            if ghost then
-                drone_data.chain_linger_remaining = nil
-                drone_data.order = drone_orders.construct
-                drone_data.target = ghost
-                drone_data.item_to_place = build_item
-                drone_data.item_place_count = build_item.count
-                drone_data.entity_ghost_name = ghost.ghost_name
-                drone_data.extra_targets = nil
-                drone_data.pickup = nil
-                update_drone_sticker(drone_data)
-                return process_drone_command(drone_data)
-            end
-            -- Still no ghost — continue lingering or give up
-            local remaining = drone_data.chain_linger_remaining
-            if remaining > 0 then
-                local wait = math.min(remaining, 30)
-                drone_data.chain_linger_remaining = remaining - wait
-                return drone_wait(drone_data, wait)
-            end
-            drone_data.chain_linger_remaining = nil
-            drone_data.dropoff = {}
-            return process_drone_command(drone_data)
-        end
         return cancel_drone_order(drone_data)
     end
 
@@ -646,25 +756,7 @@ process_deconstruct_command = function(drone_data)
             drone_data.extra_targets = nil
             drone_data.pickup = nil
         else
-            -- No ghost found yet — linger if configured, to allow time for paste
-            local player = drone_data.player
-            local linger_time = 0
-            if player and player.valid then
-                linger_time = settings.get_player_settings(player)["drone-chain-linger-time"].value
-            end
-            local remaining = drone_data.chain_linger_remaining
-            if remaining == nil then
-                -- First attempt, initialize linger countdown
-                remaining = linger_time
-            end
-            if remaining > 0 then
-                local wait = math.min(remaining, 30)
-                drone_data.chain_linger_remaining = remaining - wait
-                update_drone_sticker(drone_data)
-                return drone_wait(drone_data, wait)
-            end
-            -- Linger expired, give up and return to player
-            drone_data.chain_linger_remaining = nil
+            -- No ghost found — start returning; redirection system will catch new work
             drone_data.dropoff = {}
         end
     end
@@ -965,6 +1057,9 @@ process_return_to_player_command = function(drone_data, force)
         return cancel_drone_order(drone_data)
     end
 
+    -- Mark drone as returning so it can be redirected to new work
+    drone_data.returning = true
+
     if not (force or move_to_player(drone_data, player)) then return end -- attempt to move to the player
 
     --Now that we're at the player (we think), check they still exist, they might have logged off
@@ -972,6 +1067,7 @@ process_return_to_player_command = function(drone_data, force)
         cancel_drone_order(drone_data)
         return
     end
+    drone_data.returning = nil
     local inventory = get_drone_inventory(drone_data)
     transfer_inventory(inventory, player.character)
 
