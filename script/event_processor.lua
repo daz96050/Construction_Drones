@@ -427,8 +427,6 @@ lib.on_load = function()
 end
 
 lib.on_init = function()
-    game.map_settings.steering.default.force_unit_fuzzy_goto_behavior = false
-    game.map_settings.steering.moving.force_unit_fuzzy_goto_behavior = false
     game.map_settings.path_finder.use_path_cache = false
     storage.construction_drone = storage.construction_drone or data
 

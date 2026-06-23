@@ -1,4 +1,18 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.10
+Date: 23 June 2026
+  General:
+   - Update for 2.1
+---------------------------------------------------------------------------------------------------
+Version: 1.1.9
+Date: 23 June 2026
+  Bugfix:
+    - Fix crash related to player character being nil
+  Feature:
+    - Drones will now wait for disconnected players instead of constantly trying to find them
+    - Quality drones will have bigger inventories and move faster
+    - Drones will look for close-by jobs while returning if they still have an inventory
+---------------------------------------------------------------------------------------------------
 Version: 1.1.7
 Date: 7 March 2026
   Bugfix:
