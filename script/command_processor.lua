@@ -858,7 +858,7 @@ process_upgrade_command = function(drone_data)
     local direction = target.direction
     local entity_type = target.type
     local index = unique_index(target)
-    local neighbour = entity_type == "underground-belt" and target.neighbours
+    local neighbour = entity_type == "underground-belt" and target.underground_belt_neighbour
     local type = entity_type == "underground-belt" and target.belt_to_ground_type or
             (entity_type == "loader" or entity_type == "loader-1x1") and target.loader_type
     local position = target.position
