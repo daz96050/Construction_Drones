@@ -424,33 +424,8 @@ cancel_player_drone_orders = function(player)
 
             drone_data.order = nil
             drone_data.target = nil
-            drone_data.returning = nil
 
             park_drone(drone_data)
-        end
-    end
-end
-
--- Force all player drones to return to player (for toggle-off).
--- Unlike parking, these drones actively travel home and can be redirected if toggle is re-enabled.
-return_player_drones = function(player)
-    for unit_number, drone_data in pairs(data.drone_commands) do
-        if drone_data.player == player and drone_data.entity and drone_data.entity.valid then
-            clear_extra_targets(drone_data)
-            clear_target(drone_data)
-
-            if data.job_queue[player.index] then
-                data.job_queue[player.index][unit_number] = nil
-            end
-
-            drone_data.order = nil
-            drone_data.target = nil
-            drone_data.pickup = nil
-            drone_data.dropoff = {}
-            drone_data.returning = true
-
-            update_drone_sticker(drone_data)
-            process_return_to_player_command(drone_data)
         end
     end
 end
