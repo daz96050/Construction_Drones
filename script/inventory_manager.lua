@@ -86,15 +86,19 @@ transfer_inventory = function(source, destination)
 end
 
 take_entity_stack = function(inventory, entity)
-    local insert = inventory.insert
-    local to_spill = {}
     if entity.name == "entity-ghost" then return end
     local stack = stack_from_product(entity)
-    if stack then
-        local leftover = stack.count - insert(stack)
-        if leftover > 0 then
-            to_spill[stack.name] = (to_spill[stack.name] or 0) + leftover
-        end
+    if not stack then return end
+
+    local leftover = stack.count - inventory.insert(stack)
+    if leftover > 0 then
+        -- The drone is full, the rest goes on the ground instead of being deleted
+        entity.surface.spill_item_stack {
+            position = entity.position,
+            stack = { name = stack.name, count = leftover, quality = stack.quality },
+            enable_looted = false,
+            force = entity.force,
+        }
     end
 end
 

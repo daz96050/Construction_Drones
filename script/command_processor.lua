@@ -862,6 +862,7 @@ process_upgrade_command = function(drone_data)
     local type = entity_type == "underground-belt" and target.belt_to_ground_type or
             (entity_type == "loader" or entity_type == "loader-1x1") and target.loader_type
     local position = target.position
+    local force = target.force
 
     surface.create_entity {
         name = prototype.name,
@@ -869,7 +870,7 @@ process_upgrade_command = function(drone_data)
         direction = direction,
         quality = item.quality,
         fast_replace = true,
-        force = target.force,
+        force = force,
         spill = false,
         type = type or nil,
         raise_built = true,
@@ -878,7 +879,16 @@ process_upgrade_command = function(drone_data)
     data.already_targeted[index] = nil
     remove_from_inventory(drone_inventory, drone_data.item_to_place)
     logs.debug("Inserting item to drone inventory: " .. serpent.block(item_to_return))
-    drone_inventory.insert(item_to_return)
+    local returned = drone_inventory.insert(item_to_return)
+    if returned == 0 then
+        -- The drone is full, the upgraded entity goes on the ground instead of being deleted
+        surface.spill_item_stack {
+            position = position,
+            stack = { name = item_to_return.name, count = 1, quality = item_to_return.quality },
+            enable_looted = false,
+            force = force,
+        }
+    end
     if neighbour and neighbour.valid and search_drone_inventory(drone_inventory, drone_data.item_to_place) > 0 then
         -- print("Upgrading neighbour")
         local type = neighbour.type == "underground-belt" and neighbour.belt_to_ground_type
