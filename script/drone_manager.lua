@@ -429,3 +429,26 @@ cancel_player_drone_orders = function(player)
         end
     end
 end
+
+-- Send all of a player's drones back to the player to unload and be picked up (for toggle-off).
+-- Unlike parking (used for disconnect), these drones actively travel home.
+return_player_drones = function(player)
+    for unit_number, drone_data in pairs(data.drone_commands) do
+        if drone_data.player == player and drone_data.entity and drone_data.entity.valid then
+            clear_extra_targets(drone_data)
+            clear_target(drone_data)
+
+            if data.job_queue[player.index] then
+                data.job_queue[player.index][unit_number] = nil
+            end
+
+            drone_data.order = nil
+            drone_data.target = nil
+            drone_data.pickup = nil
+            drone_data.dropoff = {}
+
+            update_drone_sticker(drone_data)
+            process_return_to_player_command(drone_data)
+        end
+    end
+end
