@@ -578,7 +578,15 @@ process_deconstruct_command = function(drone_data)
         tiles = { { name = target.surface.get_hidden_tile(target.position) or "grass-1", position = target.position } }
     end
 
-    local mined = target.mine { inventory = drone_inventory, force = false, raise_destroyed = true }
+    -- Only mine when the drone can hold everything that comes out, or the engine spills the
+    -- overflow (typically the building itself). Otherwise take what contents fit and go unload;
+    -- the entity stays marked and is picked up again on a later trip.
+    local fits = can_hold_mining_yield(drone_inventory, target)
+    if not fits then
+        pull_entity_inventories(target, drone_inventory)
+        fits = can_hold_mining_yield(drone_inventory, target)
+    end
+    local mined = fits and target.mine { inventory = drone_inventory, force = false, raise_destroyed = true }
     data.already_targeted[index] = nil
 
     if mined then
@@ -721,7 +729,7 @@ process_upgrade_command = function(drone_data)
     local drone = drone_data.entity
 
     if not move_to_order_target(drone_data, target) then return end
-    local item_to_return = {name = target.name, quality = target.quality, health = target.health}
+    local item_to_return = {name = target.name, quality = target.quality, health = target.get_health_ratio() or 1}
     local surface = drone.surface
     local prototype = drone_data.upgrade_prototype
     local direction = target.direction
@@ -731,6 +739,22 @@ process_upgrade_command = function(drone_data)
     local type = entity_type == "underground-belt" and target.belt_to_ground_type or
             (entity_type == "loader" or entity_type == "loader-1x1") and target.loader_type
     local position = target.position
+
+    -- The old building goes back into the drone. Check it has room before replacing anything,
+    -- otherwise the insert below silently fails and the old building is lost. For an underground
+    -- belt pair, reserve room for both halves so we never upgrade only one end.
+    local new_item = { name = item.name, quality = item.quality, count = 1 }
+    local removals = { new_item }
+    local insertions = { item_to_return }
+    local upgrade_neighbour = neighbour and neighbour.valid and search_drone_inventory(drone_inventory, item) >= 2
+    if upgrade_neighbour then
+        removals[2] = new_item
+        insertions[2] = { name = neighbour.name, quality = neighbour.quality, health = neighbour.get_health_ratio() or 1 }
+    end
+    if not inventory_can_swap(drone_inventory, removals, insertions) then
+        logs.debug("No room in drone inventory for the replaced building, returning to unload")
+        return cancel_drone_order(drone_data)
+    end
 
     surface.create_entity {
         name = prototype.name,
@@ -748,12 +772,13 @@ process_upgrade_command = function(drone_data)
     remove_from_inventory(drone_inventory, drone_data.item_to_place)
     logs.debug("Inserting item to drone inventory: " .. serpent.block(item_to_return))
     drone_inventory.insert(item_to_return)
-    if neighbour and neighbour.valid and search_drone_inventory(drone_inventory, drone_data.item_to_place) > 0 then
+    if upgrade_neighbour and neighbour.valid and search_drone_inventory(drone_inventory, drone_data.item_to_place) > 0 then
         -- print("Upgrading neighbour")
         local type = neighbour.type == "underground-belt" and neighbour.belt_to_ground_type
         local neighbour_index = unique_index(neighbour)
-        take_entity_stack(drone_inventory, neighbour)
+        local neighbour_item = { name = neighbour.name, quality = neighbour.quality, health = neighbour.get_health_ratio() or 1 }
         remove_from_inventory(drone_inventory, drone_data.item_to_place)
+        drone_inventory.insert(neighbour_item)
         surface.create_entity {
             name = prototype.name,
             position = neighbour.position,
