@@ -424,8 +424,12 @@ process_construct_command = function(drone_data)
                 position = position,
                 radius = radius,
             }) do
-                -- print("Telling idiot to MOVE IT ("..drone.unit_number.." - "..game.tick..")")
-                unit_clear_target(unit, target)
+                -- Don't shove drones that are working: it replaces their current command, so
+                -- every retry turns them around and they loop between their target and here.
+                -- They leave the footprint on their own (and are often clearing it, e.g. trees).
+                if not is_busy_drone(unit) then
+                    unit_clear_target(unit, target)
+                end
             end
         end
         return
