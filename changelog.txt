@@ -13,6 +13,7 @@ Date: 15 November 2026
   Bugfixes:
     - Fix spectral drones colliding with buildings like normal drones
     - Fix drones looking busy for a new player who took over a removed player's slot
+    - Fix drones standing on the ghost they were building (or on each other's ghosts) and never building it; drones standing still in a ghost's footprint are moved aside again, while drones just walking through are still left alone
     - Fix drones building ghosts that Construction Approvals had un-approved: drones now re-check a ghost before building it, skip unapproved ghosts when chaining builds after deconstruction, and no longer pull nearby ghosts/upgrades/deconstructions from other forces or players into a batch
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.19

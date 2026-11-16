@@ -169,6 +169,22 @@ is_busy_drone = function(unit)
     return drone_data ~= nil and (drone_data.order ~= nil or drone_data.pickup ~= nil or drone_data.dropoff ~= nil)
 end
 
+-- Whether `unit` is walking somewhere, as opposed to standing still (drone_wait gives a `stop`
+-- command while a drone waits to retry a build).
+is_walking_unit = function(unit)
+    local command = unit.commandable and unit.commandable.command
+    return command ~= nil and command.type ~= defines.command.stop
+end
+
+-- Whether a unit standing in a ghost's footprint should be shoved out so the ghost can be built.
+-- A busy drone that is walking through leaves by itself, and shoving it would replace its command
+-- and turn it around. Anything standing still is shoved: that includes the building drone itself
+-- and drones waiting on their own builds, which would otherwise block it (or each other) forever.
+-- A shoved drone re-checks its job when the shove completes.
+should_shove_unit = function(unit)
+    return not (is_busy_drone(unit) and is_walking_unit(unit))
+end
+
 unit_clear_target = function(unit, target)
     local r = get_radius(unit) + get_radius(target) + 1
     local position = { x = true, y = true }
