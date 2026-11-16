@@ -47,6 +47,13 @@ function planner.plan(target_count, free)
     return batches
 end
 
+-- How many targets the player can actually supply: held items / items per placement.
+-- held = nil means unlimited (cheat mode).
+function planner.affordable_targets(target_count, held, per_target)
+    if held == nil then return target_count end
+    return math.min(target_count, math.floor(held / math.max(per_target, 1)))
+end
+
 -- Hands out targets (already sorted by distance) to batches in order.
 -- returns: chunks { quality = string, targets = target[] }[], leftover target[] that no batch took
 function planner.split(targets, batches)

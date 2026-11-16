@@ -77,3 +77,12 @@ assert(table.concat(leftover, "") == "f", "split_assigns_targets_in_order: lefto
 -- split_with_no_batches_leaves_everything
 chunks, leftover = planner.split({ "a", "b" }, {})
 assert(#chunks == 0 and #leftover == 2, "split_with_no_batches_leaves_everything")
+
+-- affordable_targets_caps_by_items_held
+assert(planner.affordable_targets(10, 2, 1) == 2, "affordable_targets_caps_by_items_held")
+-- affordable_targets_counts_multi_item_placements
+assert(planner.affordable_targets(10, 7, 3) == 2, "affordable_targets_counts_multi_item_placements")
+-- affordable_targets_no_cap_when_enough
+assert(planner.affordable_targets(4, 100, 1) == 4, "affordable_targets_no_cap_when_enough")
+-- affordable_targets_nil_held_is_unlimited (cheat mode)
+assert(planner.affordable_targets(10, nil, 1) == 10, "affordable_targets_nil_held_is_unlimited")

@@ -96,17 +96,17 @@ make_player_drone = function(player, quality_name)
 end
 
 
--- Drones held by the player's character, keyed by quality name. Empty without a character.
+-- Drones held by the player's character, keyed by quality name (zero counts omitted). Empty without
+-- a character. Called every tick per player, so it uses one get_item_count per quality rather than
+-- walking inventory contents; it counts what character.remove_item in make_player_drone can take.
 get_drone_counts = function(player)
     local counts = {}
     local character = player.character
     if not character then return counts end
-    for _, inventory in pairs(inventories(character)) do
-        for _, item in ipairs(inventory.get_contents()) do
-            if item.name == shared.units.construction_drone then
-                local quality = item.quality or "normal"
-                counts[quality] = (counts[quality] or 0) + item.count
-            end
+    for quality_name in pairs(prototypes.quality) do
+        if quality_name ~= "quality-unknown" then
+            local count = character.get_item_count({ name = shared.units.construction_drone, quality = quality_name })
+            if count > 0 then counts[quality_name] = count end
         end
     end
     return counts

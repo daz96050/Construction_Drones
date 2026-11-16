@@ -41,11 +41,15 @@ check_ghost = function(entity, player)
         return da < db
     end)
 
+    -- Only plan as many targets as the player has items for; get_build_item only checked for one.
+    local held = not player.cheat_mode and player.get_item_count({ name = item.name, quality = item.quality }) or nil
+    local affordable = batch_planner.affordable_targets(#all_targets, held, origCount)
+
     -- Size batches by how many drones are free and how much each can carry, one drone per batch
-    local batches = batch_planner.plan(#all_targets, get_free_drones(player))
+    local batches = batch_planner.plan(affordable, get_free_drones(player))
     local chunks, leftover = batch_planner.split(all_targets, batches)
 
-    -- Targets no free drone can take stay unclaimed so a later scan picks them up
+    -- Targets no free drone can take (or the player can't supply) stay unclaimed for a later scan
     for _, ghost in ipairs(leftover) do
         data.already_targeted[ghost.unit_number] = nil
     end
