@@ -32,11 +32,6 @@ local animation = {
     },
 }
 
-local quality_stats = {
-    max_health = 45,
-    movement_speed = 0.16,
-}
-
 local base_stats = {
     type = "unit",
     name = name,
@@ -130,10 +125,6 @@ local base_stats = {
 }
 local unit = {}
 
-for key, value in pairs(quality_stats) do
-    unit[key] = value
-end
-
 for key, value in pairs(base_stats) do
     unit[key] = value
 end
@@ -174,19 +165,9 @@ local proxy_chest_base = util.copy(data.raw.container["wooden-chest"])
 proxy_chest_base.name = proxy_chest_name
 proxy_chest_base.localised_name = proxy_chest_name
 proxy_chest_base.collision_box = nil
-proxy_chest_base.inventory_size = shared.drone_quality["normal"].inventory_size
+proxy_chest_base.inventory_size = shared.drone_stats(0).inventory_size
 proxy_chest_base.order = "nnov"
 proxy_chest_base.next_upgrade = nil
-
--- Create per-quality proxy chests with scaled inventory sizes
-local quality_proxy_chests = {}
-for quality_name, quality_data in pairs(shared.drone_quality) do
-    local quality_proxy = util.copy(proxy_chest_base)
-    quality_proxy.name = proxy_chest_name .. "_" .. quality_name
-    quality_proxy.localised_name = quality_proxy.name
-    quality_proxy.inventory_size = quality_data.inventory_size
-    table.insert(quality_proxy_chests, quality_proxy)
-end
 
 local beam_blend_mode = "additive"
 local beam_base = {
@@ -301,21 +282,29 @@ attack_beam.action = {
     },
 }
 
+-- One unit, spectral unit and proxy chest per quality, with stats derived from the quality's level
+-- so qualities added by other mods get sensible values instead of breaking the load.
 for quality_name, quality_value in pairs(qualities) do
     if(quality_name ~= "quality-unknown") then
+        local stats = shared.drone_stats(quality_value.level)
+
         local quality_unit = table.deepcopy(unit)
         quality_unit.name = quality_name.."-"..unit.name
         quality_unit.collision_mask = shared.default_collision_mask
-        local quality_data = shared.drone_quality[quality_value.name]
-        quality_unit.movement_speed = quality_data.movement_speed
-        quality_unit.max_health = quality_data.max_health
-        
+        quality_unit.movement_speed = stats.movement_speed
+        quality_unit.max_health = stats.max_health
+
         local spectral_quality_unit = table.deepcopy(quality_unit)
         spectral_quality_unit.name = spectral_quality_unit.name.."_spectral"
         spectral_quality_unit.collision_mask = shared.spectral_collision_mask
-        data:extend { quality_unit, spectral_quality_unit }
+
+        local quality_proxy = util.copy(proxy_chest_base)
+        quality_proxy.name = proxy_chest_name .. "_" .. quality_name
+        quality_proxy.localised_name = quality_proxy.name
+        quality_proxy.inventory_size = stats.inventory_size
+
+        data:extend { quality_unit, spectral_quality_unit, quality_proxy }
     end
 end
 
 data:extend{item, recipe, proxy_chest_base, build_beam, deconstruct_beam, pickup_beam, attack_beam}
-data:extend(quality_proxy_chests)
