@@ -5,7 +5,14 @@ Date: 15 November 2026
     - Drone quality stats now scale with the quality's level, so qualities added by other mods get drones too
     - Batch sizes adapt to the number of free drones: with drones to spare every target gets its own drone, and drones only carry several targets when there are more targets than drones
     - Higher quality drones carry bigger batches and are dispatched first; drones are no longer picked at random
-    - Rebalanced quality stats: legendary drones now move at 0.3 (was 1.2), carry 14 stacks (was 16) and have 112 health (was 240)
+    - Rebalanced quality stats. Each quality level adds 20% speed, 30% health and 2 inventory slots, up to level 10:
+        - Uncommon: speed 0.24 (was 0.3), 58 health (was 60), 6 slots
+        - Rare: speed 0.28 (was 0.6), 72 health (was 75), 8 slots
+        - Epic: speed 0.32 (was 0.8), 85 health (was 120), 10 slots (was 12)
+        - Legendary: speed 0.4 (was 1.2), 112 health (was 240), 14 slots (was 16)
+  Bugfixes:
+    - Fix spectral drones colliding with buildings like normal drones
+    - Fix drones looking busy for a new player who took over a removed player's slot
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.19
 Date: 14 November 2026

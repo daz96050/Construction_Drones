@@ -15,7 +15,8 @@ require("data/units/construction_drone/quality_variants")(
 local drone_collision_mask = "construction_drone"
 data:extend({ { type = "collision-layer", name = "construction_drone" } })
 for unit_name, _ in pairs(data.raw.unit) do
-    if string.find(unit_name, "-Construction_Drone") then
+    -- Spectral drones keep their tiles-only mask (shared.spectral_collision_mask) so they can walk through buildings.
+    if string.find(unit_name, "-Construction_Drone", 1, true) and not string.find(unit_name, "_spectral", 1, true) then
         data.raw.unit[unit_name].collision_mask = { not_colliding_with_itself = true, consider_tile_transitions = true, layers = {} }
         data.raw.unit[unit_name].collision_mask.layers[drone_collision_mask] = true
     end

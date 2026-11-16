@@ -72,7 +72,7 @@ scan_for_nearby_jobs = function(player, area)
 
         if entity.to_be_deconstructed() then
             player_queue[index] = { type = drone_orders.deconstruct, entity = entity }
-            return truee
+            return true
         end
 
         if (entity.get_health_ratio() or 1) < 1 then
@@ -360,6 +360,17 @@ on_player_left_game = function(event)
     data.job_queue[event.player_index] = nil
 end
 
+-- A removed player's in-flight path requests finish with an invalid player and can't decrement
+-- their counters, so clear them here; otherwise a new player reusing the index starts with drones
+-- that look busy. Not done on a plain leave: the player stays valid and the requests release normally.
+on_pre_player_removed = function(event)
+    on_player_left_game(event)
+    data.request_count[event.player_index] = nil
+    if data.reserved_drones then
+        data.reserved_drones[event.player_index] = nil
+    end
+end
+
 prune_commands = function()
     for unit_number, drone_data in pairs(data.drone_commands) do
         if not (drone_data.entity and drone_data.entity.valid) then
@@ -400,7 +411,7 @@ lib.events = {
     [defines.events.on_player_banned] = on_player_left_game,
     [defines.events.on_player_kicked] = on_player_left_game,
     [defines.events.on_player_joined_game] = on_player_connected,
-    [defines.events.on_pre_player_removed] = on_player_left_game,
+    [defines.events.on_pre_player_removed] = on_pre_player_removed,
 
     [defines.events.on_ai_command_completed] = on_ai_command_completed,
     [defines.events.on_entity_cloned] = on_entity_cloned,
