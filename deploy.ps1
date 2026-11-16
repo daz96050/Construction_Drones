@@ -19,8 +19,18 @@ $infoJsonPath = Join-Path -Path $modPath -ChildPath "info.json"
 $factorioModsPath = Join-Path -Path $env:APPDATA -ChildPath "Factorio\mods"
 
 
-# Load .NET assembly for zip creation
+# Load .NET assemblies for zip creation. ZipFile lives in System.IO.Compression.FileSystem, but
+# ZipArchiveMode lives in System.IO.Compression; Windows PowerShell 5.1 doesn't load the latter
+# implicitly (PowerShell 7 does), so load both.
+Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+# Write text as UTF-8 *without* a byte-order mark. Windows PowerShell 5.1's
+# `Set-Content -Encoding UTF8` prepends a BOM, which Factorio's JSON loader can reject.
+function Write-Utf8NoBom {
+    param([string]$Path, [string]$Text)
+    [System.IO.File]::WriteAllText($Path, $Text, (New-Object System.Text.UTF8Encoding $false))
+}
 
 # Prompt the user to select (or type) a folder, returning $null if they cancel
 function Get-FolderFromPrompt {
@@ -127,7 +137,7 @@ try {
     if (-not $NoBump) {
         $version = Increment-PatchVersion -Version $version
         $info.version = $version
-        $info | ConvertTo-Json -Depth 100 | Set-Content -Path $infoJsonPath -Encoding UTF8
+        Write-Utf8NoBom -Path $infoJsonPath -Text ($info | ConvertTo-Json -Depth 100)
         Write-Host "Bumped version to: $version"
     } else {
         Write-Host "Skipping version bump because -NoBump was specified."
@@ -242,7 +252,7 @@ try {
         Write-Host "Added '$modName' to mod-list.json (enabled)."
     }
 
-    $modList | ConvertTo-Json -Depth 100 | Set-Content -Path $modListPath -Encoding UTF8
+    Write-Utf8NoBom -Path $modListPath -Text ($modList | ConvertTo-Json -Depth 100)
     Write-Host "Updated mod-list.json: $modListPath"
 } catch {
     Write-Warning "Failed to update mod-list.json (mod still deployed): $_"
