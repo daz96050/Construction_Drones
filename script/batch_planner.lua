@@ -47,4 +47,59 @@ function planner.plan(target_count, free)
     return batches
 end
 
+local function by_capacity(capacities, ascending)
+    return function(a, b)
+        local ca, cb = capacities[a] or 0, capacities[b] or 0
+        if ca ~= cb then
+            if ascending then return ca < cb end
+            return ca > cb
+        end
+        return a < b
+    end
+end
+
+local function sorted_qualities(map, capacities, ascending)
+    local names = {}
+    for name in pairs(map) do names[#names + 1] = name end
+    table.sort(names, by_capacity(capacities, ascending))
+    return names
+end
+
+-- Drones a player can still hand to a new batch.
+-- counts:     { [quality] = drones held }
+-- reserved:   { [quality] = drones promised to in-flight batched path requests }
+-- capacities: { [quality] = inventory slots }
+-- allowed:    drones not taken by any in-flight request (held - request_count); unbatched requests
+--             hold an unspecified drone, so the total is trimmed to this, lowest capacity first.
+-- returns:    FreeDrone[] best capacity first, zero counts omitted
+function planner.free_drones(counts, reserved, capacities, allowed)
+    local result = {}
+    local left = math.max(allowed or 0, 0)
+    for _, quality in ipairs(sorted_qualities(counts, capacities, false)) do
+        local count = math.min(math.max(counts[quality] - (reserved[quality] or 0), 0), left)
+        if count > 0 then
+            result[#result + 1] = { quality = quality, count = count, capacity = capacities[quality] or 0 }
+            left = left - count
+        end
+    end
+    return result
+end
+
+-- Which quality of drone to spawn for a request.
+-- preferred: the quality the request reserved (nil for unbatched requests). Used while the player holds one.
+-- Otherwise the lowest-capacity drone, preferring one no batch has reserved, so the best drones
+-- stay free for batches.
+function planner.pick_quality(counts, reserved, preferred, capacities)
+    if preferred and (counts[preferred] or 0) > 0 then return preferred end
+    local held = {}
+    for quality, count in pairs(counts) do
+        if count > 0 then held[quality] = count end
+    end
+    local ordered = sorted_qualities(held, capacities, true)
+    for _, quality in ipairs(ordered) do
+        if held[quality] > (reserved[quality] or 0) then return quality end
+    end
+    return ordered[1]
+end
+
 return planner

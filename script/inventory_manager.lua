@@ -93,6 +93,12 @@ get_drone_stack_capacity = function()
     return drone_stack_capacity
 end
 
+-- Inventory slots of a drone of the given quality (same formula the data stage uses for its proxy chest).
+get_drone_capacity = function(quality_name)
+    local quality = prototypes.quality[quality_name]
+    return shared.drone_stats(quality and quality.level or 0).inventory_size
+end
+
 get_build_item = function(entity, player)
     local items
     local quality

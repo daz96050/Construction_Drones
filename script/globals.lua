@@ -49,6 +49,7 @@ data = {
     proxy_chests = {},
     path_requests = {},
     request_count = {},
+    reserved_drones = {},
     set_default_shortcut = true,
     job_queue = {},
     already_targeted = {},

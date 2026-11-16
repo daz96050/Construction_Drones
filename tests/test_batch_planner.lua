@@ -28,3 +28,41 @@ assert(#plan(5, {}) == 0 and #plan(0, { { quality = "normal", count = 3, capacit
 -- zero_count_entries_ignored
 got = sizes(plan(2, { { quality = "legendary", count = 0, capacity = 14 }, { quality = "normal", count = 2, capacity = 4 } }))
 assert(got == "normal:1,normal:1", "zero_count_entries_ignored: " .. got)
+
+local planner = require("script/batch_planner")
+local caps = { normal = 4, rare = 8, legendary = 14 }
+local function groups(list)
+    local t = {}
+    for i, g in ipairs(list) do t[i] = g.quality .. "x" .. g.count .. "@" .. g.capacity end
+    return table.concat(t, ",")
+end
+
+-- free_drones_subtracts_reservations
+got = groups(planner.free_drones({ normal = 3, legendary = 1 }, { legendary = 1 }, caps, 10))
+assert(got == "normalx3@4", "free_drones_subtracts_reservations: " .. got)
+
+-- free_drones_trims_worst_first
+got = groups(planner.free_drones({ normal = 3, legendary = 1 }, {}, caps, 2))
+assert(got == "legendaryx1@14,normalx1@4", "free_drones_trims_worst_first: " .. got)
+
+-- free_drones_over_reserved_clamps_to_zero
+got = groups(planner.free_drones({ normal = 1 }, { normal = 3 }, caps, 5))
+assert(got == "", "free_drones_over_reserved_clamps_to_zero: " .. got)
+
+-- free_drones_nothing_allowed
+assert(#planner.free_drones({ normal = 3 }, {}, caps, 0) == 0, "free_drones_nothing_allowed")
+
+-- pick_quality_uses_preferred
+assert(planner.pick_quality({ normal = 2, legendary = 1 }, {}, "legendary", caps) == "legendary", "pick_quality_uses_preferred")
+
+-- pick_quality_preferred_gone_falls_back_to_worst
+assert(planner.pick_quality({ normal = 2, rare = 1 }, {}, "legendary", caps) == "normal", "pick_quality_preferred_gone_falls_back_to_worst")
+
+-- pick_quality_unbatched_avoids_reserved
+assert(planner.pick_quality({ normal = 1, rare = 1 }, { normal = 1 }, nil, caps) == "rare", "pick_quality_unbatched_avoids_reserved")
+
+-- pick_quality_all_reserved_still_spawns
+assert(planner.pick_quality({ normal = 1 }, { normal = 1 }, nil, caps) == "normal", "pick_quality_all_reserved_still_spawns")
+
+-- pick_quality_none_held
+assert(planner.pick_quality({}, {}, nil, caps) == nil, "pick_quality_none_held")

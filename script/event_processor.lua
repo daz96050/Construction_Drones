@@ -1,4 +1,3 @@
-local unit_data = require("shared")
 local insert = table.insert
 
 -- RPC
@@ -92,14 +91,11 @@ scan_for_nearby_jobs = function(player, area)
     end
 end
 
+-- Total drones held, every quality. Counted the same way make_player_drone finds them.
 get_available_drones = function(player)
     local drone_count = 0
-    if script.active_mods["quality"] then
-        for quality, _ in pairs(unit_data.drone_quality) do
-            drone_count = drone_count + player.get_item_count({name = shared.units.construction_drone, quality = quality})
-        end
-    else
-        drone_count = player.get_item_count({name = shared.units.construction_drone})
+    for _, count in pairs(get_drone_counts(player)) do
+        drone_count = drone_count + count
     end
     return drone_count
 end
@@ -295,6 +291,7 @@ on_script_path_request_finished = function(event)
 
     local index = player.index
     data.request_count[index] = (data.request_count[index] or 0) - 1
+    release_drone(index, drone_data.drone_quality)
 
     if not event.path then
         logs.debug("Path request failed, clearing target")
@@ -312,7 +309,7 @@ on_script_path_request_finished = function(event)
     end
 
     drone_data.retry_count = 0  -- Reset on success
-    local drone = make_player_drone(player)
+    local drone = make_player_drone(player, drone_data.drone_quality)
     if not drone then
         logs.debug("Could not create drone")
         clear_target(drone_data)
@@ -450,6 +447,7 @@ lib.on_configuration_changed = function()
     game.map_settings.path_finder.use_path_cache = false
     data.path_requests = data.path_requests or {}
     data.request_count = data.request_count or {}
+    data.reserved_drones = data.reserved_drones or {}
     data.parked_drones = data.parked_drones or {}
     prune_commands()
 
