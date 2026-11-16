@@ -32,8 +32,6 @@ check_ghost = function(entity, player)
 
     if #all_targets == 0 then return end
 
-    -- Determine batch size from the smallest drone inventory
-    local batch_size = shared.drone_quality["normal"].inventory_size
     local origCount = item.count
 
     -- Sort by distance for efficient pathing within each batch
@@ -43,17 +41,23 @@ check_ghost = function(entity, player)
         return da < db
     end)
 
-    -- Split targets into batches and dispatch one drone per batch
-    for batch_start = 1, #all_targets, batch_size do
-        local batch_end = math.min(batch_start + batch_size - 1, #all_targets)
-        local batch_count = batch_end - batch_start + 1
-        local target = all_targets[batch_start]
+    -- Size batches by how many drones are free and how much each can carry, one drone per batch
+    local batches = batch_planner.plan(#all_targets, get_free_drones(player))
+    local chunks, leftover = batch_planner.split(all_targets, batches)
+
+    -- Targets no free drone can take stay unclaimed so a later scan picks them up
+    for _, ghost in ipairs(leftover) do
+        data.already_targeted[ghost.unit_number] = nil
+    end
+
+    for _, chunk in ipairs(chunks) do
+        local target = chunk.targets[1]
         local batch_extra = {}
-        for i = batch_start + 1, batch_end do
-            batch_extra[unique_index(all_targets[i])] = all_targets[i]
+        for i = 2, #chunk.targets do
+            batch_extra[unique_index(chunk.targets[i])] = chunk.targets[i]
         end
 
-        local batch_item = { name = item.name, count = origCount * batch_count, quality = item.quality }
+        local batch_item = { name = item.name, count = origCount * #chunk.targets, quality = item.quality }
         local drone_data = {
             player = player,
             order = drone_orders.construct,
@@ -63,6 +67,7 @@ check_ghost = function(entity, player)
             item_to_place = batch_item,
             item_place_count = origCount,
             extra_targets = batch_extra,
+            drone_quality = chunk.quality,
         }
 
         make_path_request(drone_data, player, target)
@@ -238,14 +243,23 @@ check_deconstruction = function(entity, player)
             return da < db
         end)
 
-        -- Split targets into batches and dispatch one drone per batch
-        local batch_size = shared.drone_quality["normal"].inventory_size
-        for batch_start = 1, #all_targets, batch_size do
-            local batch_end = math.min(batch_start + batch_size - 1, #all_targets)
-            local target = all_targets[batch_start]
+        -- Size batches by how many drones are free and how much each can carry, one drone per batch
+        local batches = batch_planner.plan(#all_targets, get_free_drones(player))
+        local chunks, leftover = batch_planner.split(all_targets, batches)
+
+        -- Targets no free drone can take stay unclaimed so a later scan picks them up
+        for _, nearby in ipairs(leftover) do
+            local nearby_index = unique_index(nearby)
+            data.already_targeted[nearby_index] = nil
+            local remaining = (data.sent_deconstruction[nearby_index] or 1) - 1
+            data.sent_deconstruction[nearby_index] = remaining > 0 and remaining or nil
+        end
+
+        for _, chunk in ipairs(chunks) do
+            local target = chunk.targets[1]
             local batch_extra = {}
-            for i = batch_start + 1, batch_end do
-                batch_extra[unique_index(all_targets[i])] = all_targets[i]
+            for i = 2, #chunk.targets do
+                batch_extra[unique_index(chunk.targets[i])] = chunk.targets[i]
             end
 
             local drone_data = {
@@ -253,6 +267,7 @@ check_deconstruction = function(entity, player)
                 order = drone_orders.deconstruct,
                 target = target,
                 extra_targets = batch_extra,
+                drone_quality = chunk.quality,
             }
 
             make_path_request(drone_data, player, target)

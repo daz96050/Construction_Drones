@@ -47,6 +47,28 @@ function planner.plan(target_count, free)
     return batches
 end
 
+-- Hands out targets (already sorted by distance) to batches in order.
+-- returns: chunks { quality = string, targets = target[] }[], leftover target[] that no batch took
+function planner.split(targets, batches)
+    local chunks = {}
+    local next_index = 1
+    for _, batch in ipairs(batches) do
+        local chunk = {}
+        for i = next_index, math.min(next_index + batch.size - 1, #targets) do
+            chunk[#chunk + 1] = targets[i]
+        end
+        next_index = next_index + #chunk
+        if #chunk > 0 then
+            chunks[#chunks + 1] = { quality = batch.quality, targets = chunk }
+        end
+    end
+    local leftover = {}
+    for i = next_index, #targets do
+        leftover[#leftover + 1] = targets[i]
+    end
+    return chunks, leftover
+end
+
 local function by_capacity(capacities, ascending)
     return function(a, b)
         local ca, cb = capacities[a] or 0, capacities[b] or 0

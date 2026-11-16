@@ -66,3 +66,14 @@ assert(planner.pick_quality({ normal = 1 }, { normal = 1 }, nil, caps) == "norma
 
 -- pick_quality_none_held
 assert(planner.pick_quality({}, {}, nil, caps) == nil, "pick_quality_none_held")
+
+-- split_assigns_targets_in_order
+local chunks, leftover = planner.split({ "a", "b", "c", "d", "e", "f" }, { { quality = "legendary", size = 3 }, { quality = "normal", size = 2 } })
+assert(#chunks == 2, "split_assigns_targets_in_order: chunk count")
+assert(chunks[1].quality == "legendary" and table.concat(chunks[1].targets, "") == "abc", "split_assigns_targets_in_order: first chunk")
+assert(chunks[2].quality == "normal" and table.concat(chunks[2].targets, "") == "de", "split_assigns_targets_in_order: second chunk")
+assert(table.concat(leftover, "") == "f", "split_assigns_targets_in_order: leftover")
+
+-- split_with_no_batches_leaves_everything
+chunks, leftover = planner.split({ "a", "b" }, {})
+assert(#chunks == 0 and #leftover == 2, "split_with_no_batches_leaves_everything")
