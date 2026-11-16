@@ -22,7 +22,7 @@ check_ghost = function(entity, player)
     for _, ghost in pairs(extra) do
         local unit_number = ghost.unit_number
         local should_check = not data.already_targeted[unit_number]
-        if should_check and should_process_entity(entity, player, drone_orders.construct) then
+        if should_check and should_process_entity(ghost, player, drone_orders.construct) then
             if ghost.ghost_name == entity.ghost_name and ghost.quality == entity.quality then
                 data.already_targeted[unit_number] = true
                 table.insert(all_targets, ghost)
@@ -108,7 +108,7 @@ check_upgrade = function(entity, player)
         end
         local nearby_index = nearby.unit_number
         local should_check = not data.already_targeted[nearby_index]
-        if should_check and should_process_entity(entity, player, drone_orders.upgrade) then
+        if should_check and should_process_entity(nearby, player, drone_orders.upgrade) then
             data.already_targeted[nearby_index] = true
             extra_targets[nearby_index] = nearby
             count = count + 1
@@ -230,7 +230,7 @@ check_deconstruction = function(entity, player)
         }) do
             local nearby_index = unique_index(nearby)
             local should_check = not data.already_targeted[nearby_index]
-            if should_check and should_process_entity(entity, player, drone_orders.deconstruct) then
+            if should_check and should_process_entity(nearby, player, drone_orders.deconstruct) then
                 data.already_targeted[nearby_index] = true
                 data.sent_deconstruction[nearby_index] = (data.sent_deconstruction[nearby_index] or 0) + 1
                 table.insert(all_targets, nearby)
@@ -421,6 +421,19 @@ process_construct_command = function(drone_data)
         return cancel_drone_order(drone_data) -- entity got upgraded?
     end
 
+    -- The ghost may have changed hands since the drone was dispatched, e.g. Construction Approvals
+    -- un-approving it moves it to a separate "<force>.unapproved_ghosts" force. Skip it (the scan
+    -- picks it up again if it's re-approved) and carry on with the rest of the batch.
+    if not should_process_entity(target, drone_data.player, drone_orders.construct) then
+        logs.debug("target is no longer ours to build, skipping it")
+        data.already_targeted[unique_index(target)] = nil
+        if get_extra_target(drone_data) then
+            return process_drone_command(drone_data)
+        end
+        drone_data.target = nil
+        return cancel_drone_order(drone_data)
+    end
+
     if not move_to_order_target(drone_data, target) then
         logs.debug("could not move to target for construction")
         return
@@ -539,7 +552,9 @@ find_chain_construct_job = function(drone_data)
 
     for _, ghost in pairs(nearby_ghosts) do
         local ghost_index = unique_index(ghost)
-        if not data.already_targeted[ghost_index] then
+        -- Same force/owner rules as the scan, so e.g. ghosts that Construction Approvals moved to
+        -- its "<force>.unapproved_ghosts" force are never chain-built.
+        if not data.already_targeted[ghost_index] and should_process_entity(ghost, player, drone_orders.construct) then
             local items_to_place = ghost.ghost_prototype.items_to_place_this
             if items_to_place then
                 local ghost_quality = ghost.quality
