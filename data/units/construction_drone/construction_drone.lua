@@ -1,6 +1,5 @@
 local path = util.path("data/units/construction_drone/")
 local name = shared.units.construction_drone
-local qualities = table.deepcopy(data.raw["quality"])
 
 local scale = 1
 
@@ -282,29 +281,8 @@ attack_beam.action = {
     },
 }
 
--- One unit, spectral unit and proxy chest per quality, with stats derived from the quality's level
--- so qualities added by other mods get sensible values instead of breaking the load.
-for quality_name, quality_value in pairs(qualities) do
-    if(quality_name ~= "quality-unknown") then
-        local stats = shared.drone_stats(quality_value.level)
-
-        local quality_unit = table.deepcopy(unit)
-        quality_unit.name = quality_name.."-"..unit.name
-        quality_unit.collision_mask = shared.default_collision_mask
-        quality_unit.movement_speed = stats.movement_speed
-        quality_unit.max_health = stats.max_health
-
-        local spectral_quality_unit = table.deepcopy(quality_unit)
-        spectral_quality_unit.name = spectral_quality_unit.name.."_spectral"
-        spectral_quality_unit.collision_mask = shared.spectral_collision_mask
-
-        local quality_proxy = util.copy(proxy_chest_base)
-        quality_proxy.name = proxy_chest_name .. "_" .. quality_name
-        quality_proxy.localised_name = quality_proxy.name
-        quality_proxy.inventory_size = stats.inventory_size
-
-        data:extend { quality_unit, spectral_quality_unit, quality_proxy }
-    end
-end
+-- Per-quality units and proxy chests for the qualities that exist now; data-final-fixes.lua
+-- adds the ones other mods define later.
+require("data/units/construction_drone/quality_variants")(unit, proxy_chest_base)
 
 data:extend{item, recipe, proxy_chest_base, build_beam, deconstruct_beam, pickup_beam, attack_beam}
