@@ -30,7 +30,7 @@ local function compute_search_offsets(div)
     end
     -- Sort by distance for spiral search order
     table.sort(offsets, function(a, b)
-        return distance(a[1], { 0, 0 }) < distance(b[1], { 0, 0 })
+        return util.distance(a[1], { 0, 0 }) < util.distance(b[1], { 0, 0 })
     end)
     return offsets
 end
