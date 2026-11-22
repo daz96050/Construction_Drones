@@ -265,31 +265,49 @@ local beam_base = {
     },
 }
 
+local function recursive_hack_tint(array, tint)
+    for _, v in pairs(array) do
+        if type(v) == "table" then
+            if is_sprite_def(v) then
+                v.tint = tint
+            end
+            util.recursive_hack_tint(v, tint)
+        end
+    end
+end
+
+local function damage_type(name)
+    if not data.raw["damage-type"][name] then
+        data:extend { { type = "damage-type", name = name, localised_name = name } }
+    end
+    return name
+end
+
 beam_base = util.copy(data.raw.beam["laser-beam"])
 beam_base.damage_interval = 10000
 
 local beams = shared.beams
 
 local build_beam = util.copy(beam_base)
-util.recursive_hack_tint(build_beam, { g = 1 })
+recursive_hack_tint(build_beam, { g = 1 })
 build_beam.name = beams.build
 build_beam.localised_name = beams.build
 build_beam.action = nil
 
 local deconstruct_beam = util.copy(beam_base)
-util.recursive_hack_tint(deconstruct_beam, { r = 1 })
+recursive_hack_tint(deconstruct_beam, { r = 1 })
 deconstruct_beam.name = beams.deconstruction
 deconstruct_beam.localised_name = beams.deconstruction
 deconstruct_beam.action = nil
 
 local pickup_beam = util.copy(beam_base)
-util.recursive_hack_tint(pickup_beam, { g = 1, b = 1 })
+recursive_hack_tint(pickup_beam, { g = 1, b = 1 })
 pickup_beam.name = beams.pickup
 pickup_beam.localised_name = beams.pickup
 pickup_beam.action = nil
 
 local attack_beam = util.copy(beam_base)
-util.recursive_hack_tint(attack_beam, { r = 1, b = 1 })
+recursive_hack_tint(attack_beam, { r = 1, b = 1 })
 attack_beam.name = beams.attack
 attack_beam.localised_name = beams.attack
 attack_beam.damage_interval = 20
