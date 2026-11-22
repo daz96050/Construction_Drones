@@ -1,4 +1,3 @@
-util = require "__Construction_Drones_Forked__/data/tf_util/tf_util"
 local collision_mask_util = require("collision-mask-util")
 
 -- We want the drones to have a unique set of collisions, which is not already accommodated for in the default collision
