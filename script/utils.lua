@@ -258,3 +258,4 @@ console = function(string)
     game.print(string)
     log(string)
 end
+
