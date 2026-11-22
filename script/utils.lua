@@ -1,5 +1,5 @@
 local sin, cos = math.sin, math.cos
-local angle = util.angle
+local angle = script_util.angle
 local floor = math.floor
 local random = math.random
 
