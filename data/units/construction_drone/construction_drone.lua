@@ -271,7 +271,7 @@ local function recursive_hack_tint(array, tint)
             if is_sprite_def(v) then
                 v.tint = tint
             end
-            util.recursive_hack_tint(v, tint)
+            recursive_hack_tint(v, tint)
         end
     end
 end
@@ -315,7 +315,7 @@ attack_beam.action = {
     type = "direct",
     action_delivery = {
         type = "instant",
-        target_effects = { { type = "damage", damage = { amount = 5, type = util.damage_type(name) } } },
+        target_effects = { { type = "damage", damage = { amount = 5, type = damage_type(name) } } },
     },
 }
 
