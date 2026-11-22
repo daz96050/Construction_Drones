@@ -6,7 +6,6 @@ logs = require("script/logs")
 require("script/inventory_manager")
 require("script/command_processor")
 require("script/drone_manager")
-require("script/utils")
 require("script/globals")
 
 handler.add_lib(require("script/event_processor"))  -- Registers event handlers and mod lifecycle functions
