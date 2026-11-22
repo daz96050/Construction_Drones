@@ -268,7 +268,7 @@ local beam_base = {
 local function recursive_hack_tint(array, tint)
     for _, v in pairs(array) do
         if type(v) == "table" then
-            if is_sprite_def(v) then
+            if util.is_sprite_def(v) then
                 v.tint = tint
             end
             recursive_hack_tint(v, tint)
