@@ -1,4 +1,4 @@
-local path = util.path("data/units/construction_drone/")
+local path = "__Construction_Drones_Forked__/data/units/construction_drone/"
 local name = shared.units.construction_drone
 local qualities = table.deepcopy(data.raw["quality"])
 
