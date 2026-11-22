@@ -1,3 +1,4 @@
+local util = require("util")
 shared = require("shared")
 require "data/units/units"
 require "data/hotkeys"
