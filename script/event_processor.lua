@@ -356,6 +356,7 @@ end
 
 on_player_left_game = function(event)
     local player = game.get_player(event.player_index)
+    if not player then return end
     cancel_player_drone_orders(player)
     data.job_queue[event.player_index] = nil
 end
