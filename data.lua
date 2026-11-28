@@ -1,4 +1,3 @@
-local util = require("util")
 shared = require("shared")
 require "data/units/units"
 require "data/hotkeys"
@@ -17,7 +16,7 @@ data:extend({
     {
         type = "technology",
         name = "spectral-drones",
-        icon = "__Construction_Drones_Forked__/graphics/technology/spectral-drones-128.png",
+        icon = shared.mod_path .. "graphics/technology/spectral-drones-128.png",
         icon_size = 128,
         effects = {},
         prerequisites = prereq,  -- Adjust prerequisites as needed (e.g., based on your mod's tech tree)

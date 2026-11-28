@@ -136,16 +136,8 @@ get_radius = function(entity, range, goto_entity)
     return radius
 end
 
-distance = function(position_1, position_2)
-    local x1 = position_1[1] or position_1.x
-    local y1 = position_1[2] or position_1.y
-    local x2 = position_2[1] or position_2.x
-    local y2 = position_2[2] or position_2.y
-    return (((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1))) ^ 0.5
-end
-
 in_construction_range = function(drone, target)
-    local distance = distance(drone.position, target.position) - 2
+    local distance = util.distance(drone.position, target.position) - 2
     return distance <= ((get_radius(drone, ranges.interact) + (get_radius(target))))
 end
 

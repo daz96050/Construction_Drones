@@ -1,4 +1,4 @@
-local path = "__Construction_Drones_Forked__/data/units/construction_drone/"
+local path = shared.mod_path .. "data/units/construction_drone/"
 
 local icon = {
     filename = path .. "construction_drone_icon.png",
