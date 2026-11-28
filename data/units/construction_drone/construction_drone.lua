@@ -1,4 +1,5 @@
 local util = require("util")
+local shared = require("shared")
 local path = shared.mod_path .. "data/units/construction_drone/"
 local name = shared.units.construction_drone
 

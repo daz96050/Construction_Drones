@@ -1,3 +1,4 @@
+local shared = require("shared")
 local path = shared.mod_path .. "data/units/construction_drone/"
 
 local icon = {

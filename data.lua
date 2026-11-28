@@ -1,4 +1,4 @@
-shared = require("shared")
+local shared = require("shared")
 require "data/units/units"
 require "data/hotkeys"
 require "data/shortcut"
