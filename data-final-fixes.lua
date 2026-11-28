@@ -1,6 +1,6 @@
 util = require "__Construction_Drones_Forked__/data/tf_util/tf_util"
 local collision_mask_util = require("collision-mask-util")
-shared = shared or require("shared")
+local shared = require("shared")
 
 -- Drones for qualities that mods loading after this one added (data.lua only saw the qualities
 -- defined by then). Must run before the collision-mask pass below so the new units get it too.

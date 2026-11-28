@@ -1,3 +1,4 @@
+local shared = require("shared")
 local path = util.path("data/units/construction_drone/")
 local name = shared.units.construction_drone
 

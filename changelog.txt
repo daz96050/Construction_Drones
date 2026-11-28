@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.21
+Date: 27 November 2026
+  Bugfixes:
+    - Fix failing to load alongside mods that also define a global named "shared" (e.g. Mining Drones Remastered): data-final-fixes.lua could pick up the other mod's table and crash with "attempt to index field 'units'"
+    - Fix the drone and repair toggle hotkeys starting unbound on Factorio 2.1 (unknown key_sequence "SHIFT + ]" / "SHIFT + ["); they now default to SHIFT + ] and SHIFT + [ again
+---------------------------------------------------------------------------------------------------
 Version: 1.1.20
 Date: 15 November 2026
   Changes:

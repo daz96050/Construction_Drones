@@ -4,6 +4,8 @@
 -- Called from data.lua (so `normal` always exists) and again from data-final-fixes.lua: quality
 -- mods that load after this one add their qualities after our data.lua has run, and would
 -- otherwise have drones with no unit to spawn.
+local shared = require("shared")
+
 return function(unit_template, proxy_template)
     local base_unit_name = shared.units.construction_drone
     for quality_name, quality in pairs(data.raw["quality"] or {}) do
