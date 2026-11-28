@@ -162,6 +162,13 @@ get_build_time = function()
     return random(15, 25)
 end
 
+-- Whether `unit` is one of our drones in the middle of a job. Such a drone leaves a ghost's
+-- footprint by itself once it has walked through or finished its work there.
+is_busy_drone = function(unit)
+    local drone_data = data.drone_commands[unit.unit_number]
+    return drone_data ~= nil and (drone_data.order ~= nil or drone_data.pickup ~= nil or drone_data.dropoff ~= nil)
+end
+
 unit_clear_target = function(unit, target)
     local r = get_radius(unit) + get_radius(target) + 1
     local position = { x = true, y = true }

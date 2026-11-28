@@ -1,4 +1,3 @@
-local unit_data = require("shared")
 local insert = table.insert
 
 -- RPC
@@ -73,7 +72,7 @@ scan_for_nearby_jobs = function(player, area)
 
         if entity.to_be_deconstructed() then
             player_queue[index] = { type = drone_orders.deconstruct, entity = entity }
-            return truee
+            return true
         end
 
         if (entity.get_health_ratio() or 1) < 1 then
@@ -92,14 +91,11 @@ scan_for_nearby_jobs = function(player, area)
     end
 end
 
+-- Total drones held, every quality. Counted the same way make_player_drone finds them.
 get_available_drones = function(player)
     local drone_count = 0
-    if script.active_mods["quality"] then
-        for quality, _ in pairs(unit_data.drone_quality) do
-            drone_count = drone_count + player.get_item_count({name = shared.units.construction_drone, quality = quality})
-        end
-    else
-        drone_count = player.get_item_count({name = shared.units.construction_drone})
+    for _, count in pairs(get_drone_counts(player)) do
+        drone_count = drone_count + count
     end
     return drone_count
 end
@@ -295,6 +291,7 @@ on_script_path_request_finished = function(event)
 
     local index = player.index
     data.request_count[index] = (data.request_count[index] or 0) - 1
+    release_drone(index, drone_data.drone_quality)
 
     if not event.path then
         logs.debug("Path request failed, clearing target")
@@ -312,7 +309,7 @@ on_script_path_request_finished = function(event)
     end
 
     drone_data.retry_count = 0  -- Reset on success
-    local drone = make_player_drone(player)
+    local drone = make_player_drone(player, drone_data.drone_quality)
     if not drone then
         logs.debug("Could not create drone")
         clear_target(drone_data)
@@ -327,12 +324,9 @@ on_construction_drone_toggle = function(event)
     local enabled = not player.is_shortcut_toggled("construction-drone-toggle")
     player.set_shortcut_toggled("construction-drone-toggle", enabled)
     if not enabled then
-        -- Toggle OFF: force drones to return (they can be redirected if toggled back on)
+        -- Toggle OFF: send drones home to unload rather than freezing them in the field
         return_player_drones(player)
         data.job_queue[event.player_index] = nil
-    else
-        -- Toggle ON: redirect any returning drones to nearby work
-        redirect_all_returning_drones(player)
     end
 end
 
@@ -364,6 +358,17 @@ on_player_left_game = function(event)
     local player = game.get_player(event.player_index)
     cancel_player_drone_orders(player)
     data.job_queue[event.player_index] = nil
+end
+
+-- A removed player's in-flight path requests finish with an invalid player and can't decrement
+-- their counters, so clear them here; otherwise a new player reusing the index starts with drones
+-- that look busy. Not done on a plain leave: the player stays valid and the requests release normally.
+on_pre_player_removed = function(event)
+    on_player_left_game(event)
+    data.request_count[event.player_index] = nil
+    if data.reserved_drones then
+        data.reserved_drones[event.player_index] = nil
+    end
 end
 
 prune_commands = function()
@@ -406,7 +411,7 @@ lib.events = {
     [defines.events.on_player_banned] = on_player_left_game,
     [defines.events.on_player_kicked] = on_player_left_game,
     [defines.events.on_player_joined_game] = on_player_connected,
-    [defines.events.on_pre_player_removed] = on_player_left_game,
+    [defines.events.on_pre_player_removed] = on_pre_player_removed,
 
     [defines.events.on_ai_command_completed] = on_ai_command_completed,
     [defines.events.on_entity_cloned] = on_entity_cloned,
@@ -453,6 +458,7 @@ lib.on_configuration_changed = function()
     game.map_settings.path_finder.use_path_cache = false
     data.path_requests = data.path_requests or {}
     data.request_count = data.request_count or {}
+    data.reserved_drones = data.reserved_drones or {}
     data.parked_drones = data.parked_drones or {}
     prune_commands()
 

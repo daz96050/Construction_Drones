@@ -20,9 +20,11 @@ make_path_request = function(drone_data, player, target)
 
     local index = player.index
     data.request_count[index] = (data.request_count[index] or 0) + 1
+    reserve_drone(index, drone_data.drone_quality)
 end
 
-make_player_drone = function(player)
+-- quality_name: the quality reserved for this request by the batch planner, or nil for unbatched requests.
+make_player_drone = function(player, quality_name)
     local player_position
     if not settings.global["remote-view-spawn"].value and (player.controller_type == defines.controllers.remote) then
         -- Fallback to physical_position in remote view if remote-view-spawn is disabled
@@ -34,14 +36,14 @@ make_player_drone = function(player)
     end
     local player_surface = player.physical_surface
 
-    local available_drones = get_quality_drones(player.character)
-    if #available_drones == 0 then
+    local counts = get_drone_counts(player)
+    local quality = batch_planner.pick_quality(counts, reserved_drones(player.index), quality_name, get_drone_capacities(counts))
+    if not quality then
         logs.debug("No available drones of any quality")
         return
     end
 
-    -- Get a random available drone
-    local drone_to_use = available_drones[math.random(#available_drones)]
+    local drone_to_use = { name = shared.units.construction_drone, quality = quality }
     local prototype_name = drone_to_use.quality .. "-" .. drone_to_use.name
 
     -- Find a spawn position close to the player
@@ -94,17 +96,54 @@ make_player_drone = function(player)
 end
 
 
-get_quality_drones = function(player)
-    local available_drones = {}
-    for _, inventory in pairs(inventories(player)) do
-        for _, item in ipairs(inventory.get_contents()) do
-            if string.find(item.name, "Construction_Drone") then
-                table.insert(available_drones, item)
-            end
+-- Drones held by the player's character, keyed by quality name (zero counts omitted). Empty without
+-- a character. Called every tick per player, so it uses one get_item_count per quality rather than
+-- walking inventory contents; it counts what character.remove_item in make_player_drone can take.
+get_drone_counts = function(player)
+    local counts = {}
+    local character = player.character
+    if not character then return counts end
+    for quality_name in pairs(prototypes.quality) do
+        if quality_name ~= "quality-unknown" then
+            local count = character.get_item_count({ name = shared.units.construction_drone, quality = quality_name })
+            if count > 0 then counts[quality_name] = count end
         end
     end
-    logs.debug("available drones: "..serpent.block(available_drones))
-    return available_drones
+    return counts
+end
+
+get_drone_capacities = function(counts)
+    local capacities = {}
+    for quality in pairs(counts) do
+        capacities[quality] = get_drone_capacity(quality)
+    end
+    return capacities
+end
+
+-- Drones the player can give to a new batch, best capacity first (FreeDrone[] for batch_planner.plan).
+get_free_drones = function(player)
+    local counts = get_drone_counts(player)
+    local allowed = get_available_drones(player) - (data.request_count[player.index] or 0)
+    return batch_planner.free_drones(counts, reserved_drones(player.index), get_drone_capacities(counts), allowed)
+end
+
+-- Qualities promised to in-flight batched path requests, per player.
+reserved_drones = function(player_index)
+    data.reserved_drones = data.reserved_drones or {}
+    data.reserved_drones[player_index] = data.reserved_drones[player_index] or {}
+    return data.reserved_drones[player_index]
+end
+
+reserve_drone = function(player_index, quality)
+    if not quality then return end
+    local reserved = reserved_drones(player_index)
+    reserved[quality] = (reserved[quality] or 0) + 1
+end
+
+release_drone = function(player_index, quality)
+    if not quality then return end
+    local reserved = reserved_drones(player_index)
+    reserved[quality] = math.max((reserved[quality] or 0) - 1, 0)
 end
 
 set_drone_order = function(drone, drone_data)
@@ -424,15 +463,14 @@ cancel_player_drone_orders = function(player)
 
             drone_data.order = nil
             drone_data.target = nil
-            drone_data.returning = nil
 
             park_drone(drone_data)
         end
     end
 end
 
--- Force all player drones to return to player (for toggle-off).
--- Unlike parking, these drones actively travel home and can be redirected if toggle is re-enabled.
+-- Send all of a player's drones back to the player to unload and be picked up (for toggle-off).
+-- Unlike parking (used for disconnect), these drones actively travel home.
 return_player_drones = function(player)
     for unit_number, drone_data in pairs(data.drone_commands) do
         if drone_data.player == player and drone_data.entity and drone_data.entity.valid then
@@ -447,7 +485,6 @@ return_player_drones = function(player)
             drone_data.target = nil
             drone_data.pickup = nil
             drone_data.dropoff = {}
-            drone_data.returning = true
 
             update_drone_sticker(drone_data)
             process_return_to_player_command(drone_data)

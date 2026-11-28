@@ -66,14 +66,5 @@ data:extend({
         minimum_value = 0,
         maximum_value = 32,
         order = "e",
-    },
-    {
-        type = "int-setting",
-        name = "drone-redirect-radius",
-        setting_type = "runtime-per-user",
-        default_value = 32,
-        minimum_value = 0,
-        maximum_value = 128,
-        order = "f",
     }
 })

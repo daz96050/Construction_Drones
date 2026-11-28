@@ -20,12 +20,12 @@ Runtime module structure
 - The `data` table in [script/globals.lua](script/globals.lua#L44-L58) holds all persistent runtime state. It is assigned to `storage.construction_drone` during `on_init`/`on_load`. When adding new persistent state, add a default value here **and** a migration (`data.new_field = data.new_field or {}`) in `on_load`.
 
 Quality system
-- Drones support Factorio's quality tiers: normal, uncommon, rare, epic, legendary.
-- Quality stats (health, speed, inventory size) are defined in `shared.drone_quality` ([shared.lua](shared.lua#L5-L31)). This table is used by both data-stage prototypes and runtime logic.
-- **Data stage**: Per-quality unit prototypes are generated in [data/units/construction_drone/construction_drone.lua](data/units/construction_drone/construction_drone.lua#L294-L308) by iterating `data.raw["quality"]` and applying stats from `shared.drone_quality`.
-- **Proxy chests**: Each quality tier has its own proxy chest prototype (e.g., `Construction_Drone_Proxy_Chest_normal`, `..._legendary`) with scaled `inventory_size`. Created in the same data file and selected at runtime by `get_proxy_chest` in [script/inventory_manager.lua](script/inventory_manager.lua#L1-L11).
-- **Runtime**: `get_quality_drones(player)` returns available drones with quality info. `make_player_drone` selects a random quality drone from the player's inventory and spawns the corresponding unit prototype.
-- When adding quality-varying behavior, add the stat to `shared.drone_quality` and consume it in both data and runtime stages.
+- Drones support any quality, including ones added by other mods. Quality means throughput: better drones carry bigger batches.
+- Stats (health, speed, inventory size) come from `shared.drone_stats(level)` in [shared.lua](shared.lua), a formula on the quality's `level`, never its name. Both stages call it.
+- **Data stage**: [data/units/construction_drone/quality_variants.lua](data/units/construction_drone/quality_variants.lua) adds a unit, a spectral unit and a proxy chest (`Construction_Drone_Proxy_Chest_<quality>`) for each quality that lacks them. It runs from `construction_drone.lua` and again from `data-final-fixes.lua`, so qualities from mods that load later are covered.
+- **Batching**: [script/batch_planner.lua](script/batch_planner.lua) is pure Lua (tested by `lua tests/run.lua`). `plan` sizes batches from the free drones (spread targets across all free drones, best drones absorb overflow), `split` hands the distance-sorted targets out, and leftovers are un-targeted for a later scan.
+- **Runtime**: `get_drone_counts(player)` counts held drones by quality; `get_free_drones(player)` subtracts in-flight requests. A batched request stores `drone_data.drone_quality`, reserved via `reserve_drone`/`release_drone` (`data.reserved_drones`); `make_player_drone(player, quality)` spawns that quality, or else the lowest-capacity unreserved drone (`batch_planner.pick_quality`).
+- When adding quality-varying behavior, add the stat to `shared.drone_stats` and consume it in both data and runtime stages.
 
 Drone lifecycle & state machine
 - Drones are Factorio units managed via `data.drone_commands[unit_number]` — each entry (`drone_data`) tracks entity reference, player owner, current order, pickup/dropoff targets, etc.

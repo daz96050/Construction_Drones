@@ -1,4 +1,12 @@
 local collision_mask_util = require("collision-mask-util")
+shared = shared or require("shared")
+
+-- Drones for qualities that mods loading after this one added (data.lua only saw the qualities
+-- defined by then). Must run before the collision-mask pass below so the new units get it too.
+require("data/units/construction_drone/quality_variants")(
+    data.raw.unit["normal-" .. shared.units.construction_drone],
+    data.raw.container[shared.entities.construction_drone_proxy_chest]
+)
 
 -- We want the drones to have a unique set of collisions, which is not already accommodated for in the default collision
 -- layers. So we need to add a completely new layer.
@@ -6,7 +14,8 @@ local collision_mask_util = require("collision-mask-util")
 local drone_collision_mask = "construction_drone"
 data:extend({ { type = "collision-layer", name = "construction_drone" } })
 for unit_name, _ in pairs(data.raw.unit) do
-    if string.find(unit_name, "-Construction_Drone") then
+    -- Spectral drones keep their tiles-only mask (shared.spectral_collision_mask) so they can walk through buildings.
+    if string.find(unit_name, "-Construction_Drone", 1, true) and not string.find(unit_name, "_spectral", 1, true) then
         data.raw.unit[unit_name].collision_mask = { not_colliding_with_itself = true, consider_tile_transitions = true, layers = {} }
         data.raw.unit[unit_name].collision_mask.layers[drone_collision_mask] = true
     end

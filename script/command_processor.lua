@@ -32,8 +32,6 @@ check_ghost = function(entity, player)
 
     if #all_targets == 0 then return end
 
-    -- Determine batch size from the smallest drone inventory
-    local batch_size = shared.drone_quality["normal"].inventory_size
     local origCount = item.count
 
     -- Sort by distance for efficient pathing within each batch
@@ -43,17 +41,27 @@ check_ghost = function(entity, player)
         return da < db
     end)
 
-    -- Split targets into batches and dispatch one drone per batch
-    for batch_start = 1, #all_targets, batch_size do
-        local batch_end = math.min(batch_start + batch_size - 1, #all_targets)
-        local batch_count = batch_end - batch_start + 1
-        local target = all_targets[batch_start]
+    -- Only plan as many targets as the player has items for; get_build_item only checked for one.
+    local held = not player.cheat_mode and player.get_item_count({ name = item.name, quality = item.quality }) or nil
+    local affordable = batch_planner.affordable_targets(#all_targets, held, origCount)
+
+    -- Size batches by how many drones are free and how much each can carry, one drone per batch
+    local batches = batch_planner.plan(affordable, get_free_drones(player))
+    local chunks, leftover = batch_planner.split(all_targets, batches)
+
+    -- Targets no free drone can take (or the player can't supply) stay unclaimed for a later scan
+    for _, ghost in ipairs(leftover) do
+        data.already_targeted[ghost.unit_number] = nil
+    end
+
+    for _, chunk in ipairs(chunks) do
+        local target = chunk.targets[1]
         local batch_extra = {}
-        for i = batch_start + 1, batch_end do
-            batch_extra[unique_index(all_targets[i])] = all_targets[i]
+        for i = 2, #chunk.targets do
+            batch_extra[unique_index(chunk.targets[i])] = chunk.targets[i]
         end
 
-        local batch_item = { name = item.name, count = origCount * batch_count, quality = item.quality }
+        local batch_item = { name = item.name, count = origCount * #chunk.targets, quality = item.quality }
         local drone_data = {
             player = player,
             order = drone_orders.construct,
@@ -63,6 +71,7 @@ check_ghost = function(entity, player)
             item_to_place = batch_item,
             item_place_count = origCount,
             extra_targets = batch_extra,
+            drone_quality = chunk.quality,
         }
 
         make_path_request(drone_data, player, target)
@@ -238,14 +247,23 @@ check_deconstruction = function(entity, player)
             return da < db
         end)
 
-        -- Split targets into batches and dispatch one drone per batch
-        local batch_size = shared.drone_quality["normal"].inventory_size
-        for batch_start = 1, #all_targets, batch_size do
-            local batch_end = math.min(batch_start + batch_size - 1, #all_targets)
-            local target = all_targets[batch_start]
+        -- Size batches by how many drones are free and how much each can carry, one drone per batch
+        local batches = batch_planner.plan(#all_targets, get_free_drones(player))
+        local chunks, leftover = batch_planner.split(all_targets, batches)
+
+        -- Targets no free drone can take stay unclaimed so a later scan picks them up
+        for _, nearby in ipairs(leftover) do
+            local nearby_index = unique_index(nearby)
+            data.already_targeted[nearby_index] = nil
+            local remaining = (data.sent_deconstruction[nearby_index] or 1) - 1
+            data.sent_deconstruction[nearby_index] = remaining > 0 and remaining or nil
+        end
+
+        for _, chunk in ipairs(chunks) do
+            local target = chunk.targets[1]
             local batch_extra = {}
-            for i = batch_start + 1, batch_end do
-                batch_extra[unique_index(all_targets[i])] = all_targets[i]
+            for i = 2, #chunk.targets do
+                batch_extra[unique_index(chunk.targets[i])] = chunk.targets[i]
             end
 
             local drone_data = {
@@ -253,6 +271,7 @@ check_deconstruction = function(entity, player)
                 order = drone_orders.deconstruct,
                 target = target,
                 extra_targets = batch_extra,
+                drone_quality = chunk.quality,
             }
 
             make_path_request(drone_data, player, target)
@@ -319,11 +338,6 @@ check_repair = function(entity, player)
 end
 
 check_job = function(player, job)
-    -- Try to redirect a returning drone before spawning a new one
-    if try_redirect_for_job(player, job) then
-        return
-    end
-
     if job.type == drone_orders.construct then
         check_ghost(job.entity, player)
         return
@@ -429,8 +443,12 @@ process_construct_command = function(drone_data)
                 position = position,
                 radius = radius,
             }) do
-                -- print("Telling idiot to MOVE IT ("..drone.unit_number.." - "..game.tick..")")
-                unit_clear_target(unit, target)
+                -- Don't shove drones that are working: it replaces their current command, so
+                -- every retry turns them around and they loop between their target and here.
+                -- They leave the footprint on their own (and are often clearing it, e.g. trees).
+                if not is_busy_drone(unit) then
+                    unit_clear_target(unit, target)
+                end
             end
         end
         return
@@ -499,6 +517,11 @@ find_chain_construct_job = function(drone_data)
     local drone_inventory = get_drone_inventory(drone_data)
     if drone_inventory.is_empty() then return end
 
+    -- Reviving a ghost pulls any loose items lying on that tile into the drone. With a
+    -- full inventory those items would spill onto the ground, so only chain-construct
+    -- when the drone has a free slot to absorb them. A full drone returns to unload first.
+    if drone_inventory.count_empty_stacks() == 0 then return end
+
     -- Build a set of carried items keyed by "name:quality"
     local carried_items = {}
     for _, item in pairs(drone_inventory.get_contents()) do
@@ -528,137 +551,6 @@ find_chain_construct_job = function(drone_data)
                         data.already_targeted[ghost_index] = true
                         item.quality = ghost_quality
                         return ghost, item
-                    end
-                end
-            end
-        end
-    end
-end
-
--- Find a returning drone belonging to this player that is near the given position.
--- Returns drone_data of the closest eligible drone, or nil.
-find_returning_drone_near = function(player, position, surface)
-    local redirect_radius = settings.get_player_settings(player)["drone-redirect-radius"].value
-    if redirect_radius <= 0 then return end
-
-    local best_drone_data = nil
-    local best_dist_sq = redirect_radius * redirect_radius
-
-    for _, drone_data in pairs(data.drone_commands) do
-        if drone_data.returning and drone_data.player == player then
-            local drone = drone_data.entity
-            if drone and drone.valid and drone.surface == surface then
-                local dx = drone.position.x - position.x
-                local dy = drone.position.y - position.y
-                local dist_sq = dx * dx + dy * dy
-                if dist_sq < best_dist_sq then
-                    best_dist_sq = dist_sq
-                    best_drone_data = drone_data
-                end
-            end
-        end
-    end
-
-    return best_drone_data
-end
-
--- Redirect a returning drone to a new construction job.
--- The drone must already have the needed items in its inventory.
-redirect_drone_to_construct = function(drone_data, ghost, build_item)
-    drone_data.returning = nil
-    drone_data.dropoff = nil
-    drone_data.order = drone_orders.construct
-    drone_data.target = ghost
-    drone_data.item_to_place = build_item
-    drone_data.item_place_count = build_item.count
-    drone_data.entity_ghost_name = ghost.ghost_name
-    drone_data.extra_targets = nil
-    drone_data.pickup = nil
-    data.already_targeted[unique_index(ghost)] = true
-    update_drone_sticker(drone_data)
-    return process_drone_command(drone_data)
-end
-
--- Redirect a returning drone to a new deconstruction job.
-redirect_drone_to_deconstruct = function(drone_data, entity)
-    drone_data.returning = nil
-    drone_data.dropoff = nil
-    drone_data.order = drone_orders.deconstruct
-    drone_data.target = entity
-    drone_data.extra_targets = nil
-    drone_data.pickup = nil
-    data.already_targeted[unique_index(entity)] = true
-    update_drone_sticker(drone_data)
-    return process_drone_command(drone_data)
-end
-
--- Try to redirect a returning drone to handle a job instead of spawning a new drone.
--- Returns true if a drone was successfully redirected.
-try_redirect_for_job = function(player, job)
-    local entity = job.entity
-    if not (entity and entity.valid) then return false end
-
-    local drone_data = find_returning_drone_near(player, entity.position, entity.surface)
-    if not drone_data then return false end
-
-    if job.type == drone_orders.deconstruct then
-        if entity.to_be_deconstructed() then
-            redirect_drone_to_deconstruct(drone_data, entity)
-            return true
-        end
-    elseif job.type == drone_orders.construct then
-        -- Can only redirect if the drone carries the needed items
-        local drone_inventory = get_drone_inventory(drone_data)
-        if not drone_inventory.is_empty() then
-            local items_to_place = entity.ghost_prototype.items_to_place_this
-            if items_to_place then
-                local ghost_quality = entity.quality
-                local quality_name = ghost_quality and ghost_quality.name or "normal"
-                for _, item in pairs(items_to_place) do
-                    local key = item.name .. ":" .. quality_name
-                    local count = drone_inventory.get_item_count({name = item.name, quality = ghost_quality})
-                    if count >= item.count then
-                        item.quality = ghost_quality
-                        redirect_drone_to_construct(drone_data, entity, item)
-                        return true
-                    end
-                end
-            end
-        end
-    end
-
-    return false
-end
-
--- Redirect all returning drones for a player to nearby work.
--- Called when the construction toggle is re-enabled.
-redirect_all_returning_drones = function(player)
-    local player_index = player.index
-    local redirect_radius = settings.get_player_settings(player)["drone-redirect-radius"].value
-    if redirect_radius <= 0 then return end
-
-    for _, drone_data in pairs(data.drone_commands) do
-        if drone_data.returning and drone_data.player == player then
-            local drone = drone_data.entity
-            if drone and drone.valid then
-                -- First try chain construct (drone has items from decon)
-                local ghost, build_item = find_chain_construct_job(drone_data)
-                if ghost then
-                    redirect_drone_to_construct(drone_data, ghost, build_item)
-                else
-                    -- Look for nearby deconstruction jobs
-                    local surface = drone.surface
-                    local nearby = surface.find_entities_filtered {
-                        position = drone.position,
-                        radius = redirect_radius,
-                        to_be_deconstructed = true,
-                    }
-                    for _, entity in pairs(nearby) do
-                        local index = unique_index(entity)
-                        if not data.already_targeted[index] then
-                            redirect_drone_to_deconstruct(drone_data, entity)
-                            break
-                        end
                     end
                 end
             end
@@ -709,7 +601,15 @@ process_deconstruct_command = function(drone_data)
         tiles = { { name = target.surface.get_hidden_tile(target.position) or "grass-1", position = target.position } }
     end
 
-    local mined = target.mine { inventory = drone_inventory, force = false, raise_destroyed = true }
+    -- Only mine when the drone can hold everything that comes out, or the engine spills the
+    -- overflow (typically the building itself). Otherwise take what contents fit and go unload;
+    -- the entity stays marked and is picked up again on a later trip.
+    local fits = can_hold_mining_yield(drone_inventory, target)
+    if not fits then
+        pull_entity_inventories(target, drone_inventory)
+        fits = can_hold_mining_yield(drone_inventory, target)
+    end
+    local mined = fits and target.mine { inventory = drone_inventory, force = false, raise_destroyed = true }
     data.already_targeted[index] = nil
 
     if mined then
@@ -756,7 +656,7 @@ process_deconstruct_command = function(drone_data)
             drone_data.extra_targets = nil
             drone_data.pickup = nil
         else
-            -- No ghost found — start returning; redirection system will catch new work
+            -- No ghost found — return to the player to unload
             drone_data.dropoff = {}
         end
     end
@@ -852,7 +752,7 @@ process_upgrade_command = function(drone_data)
     local drone = drone_data.entity
 
     if not move_to_order_target(drone_data, target) then return end
-    local item_to_return = {name = target.name, quality = target.quality, health = target.health}
+    local item_to_return = {name = target.name, quality = target.quality, health = target.get_health_ratio() or 1}
     local surface = drone.surface
     local prototype = drone_data.upgrade_prototype
     local direction = target.direction
@@ -862,6 +762,22 @@ process_upgrade_command = function(drone_data)
     local type = entity_type == "underground-belt" and target.belt_to_ground_type or
             (entity_type == "loader" or entity_type == "loader-1x1") and target.loader_type
     local position = target.position
+
+    -- The old building goes back into the drone. Check it has room before replacing anything,
+    -- otherwise the insert below silently fails and the old building is lost. For an underground
+    -- belt pair, reserve room for both halves so we never upgrade only one end.
+    local new_item = { name = item.name, quality = item.quality, count = 1 }
+    local removals = { new_item }
+    local insertions = { item_to_return }
+    local upgrade_neighbour = neighbour and neighbour.valid and search_drone_inventory(drone_inventory, item) >= 2
+    if upgrade_neighbour then
+        removals[2] = new_item
+        insertions[2] = { name = neighbour.name, quality = neighbour.quality, health = neighbour.get_health_ratio() or 1 }
+    end
+    if not inventory_can_swap(drone_inventory, removals, insertions) then
+        logs.debug("No room in drone inventory for the replaced building, returning to unload")
+        return cancel_drone_order(drone_data)
+    end
 
     surface.create_entity {
         name = prototype.name,
@@ -879,12 +795,13 @@ process_upgrade_command = function(drone_data)
     remove_from_inventory(drone_inventory, drone_data.item_to_place)
     logs.debug("Inserting item to drone inventory: " .. serpent.block(item_to_return))
     drone_inventory.insert(item_to_return)
-    if neighbour and neighbour.valid and search_drone_inventory(drone_inventory, drone_data.item_to_place) > 0 then
+    if upgrade_neighbour and neighbour.valid and search_drone_inventory(drone_inventory, drone_data.item_to_place) > 0 then
         -- print("Upgrading neighbour")
         local type = neighbour.type == "underground-belt" and neighbour.belt_to_ground_type
         local neighbour_index = unique_index(neighbour)
-        take_entity_stack(drone_inventory, neighbour)
+        local neighbour_item = { name = neighbour.name, quality = neighbour.quality, health = neighbour.get_health_ratio() or 1 }
         remove_from_inventory(drone_inventory, drone_data.item_to_place)
+        drone_inventory.insert(neighbour_item)
         surface.create_entity {
             name = prototype.name,
             position = neighbour.position,
@@ -1057,9 +974,6 @@ process_return_to_player_command = function(drone_data, force)
         return cancel_drone_order(drone_data)
     end
 
-    -- Mark drone as returning so it can be redirected to new work
-    drone_data.returning = true
-
     if not (force or move_to_player(drone_data, player)) then return end -- attempt to move to the player
 
     --Now that we're at the player (we think), check they still exist, they might have logged off
@@ -1067,7 +981,6 @@ process_return_to_player_command = function(drone_data, force)
         cancel_drone_order(drone_data)
         return
     end
-    drone_data.returning = nil
     local inventory = get_drone_inventory(drone_data)
     transfer_inventory(inventory, player.character)
 

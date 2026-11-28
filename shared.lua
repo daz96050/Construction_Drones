@@ -2,33 +2,18 @@
 local data = {}
 data.drones = {}
 
-data.drone_quality = {
-    ["normal"] = {
-        max_health = 45,
-        movement_speed = 0.2,
-        inventory_size = 4
-    },
-    ["uncommon"] = {
-        max_health = 60,
-        movement_speed = 0.3,
-        inventory_size = 6
-    },
-    ["rare"] = {
-        max_health = 75,
-        movement_speed = 0.6,
-        inventory_size = 8
-    },
-    ["epic"] = {
-        max_health = 120,
-        movement_speed = 0.8,
-        inventory_size = 12
-    },
-    ["legendary"] = {
-        max_health = 240,
-        movement_speed = 1.2,
-        inventory_size = 16
+-- Drone stats for a quality level (normal 0, uncommon 1, rare 2, epic 3, legendary 5 in vanilla).
+-- Derived from the level rather than the quality's name so qualities added by other mods work.
+-- Levels above 10 are treated as 10 so very high modded qualities don't get absurd stats.
+data.max_drone_stat_level = 10
+data.drone_stats = function(level)
+    level = math.min(math.max(level or 0, 0), data.max_drone_stat_level)
+    return {
+        max_health = math.floor(45 * (1 + 0.3 * level)),
+        movement_speed = 0.2 * (1 + 0.2 * level),
+        inventory_size = 4 + 2 * level,
     }
-}
+end
 data.units = { construction_drone = "Construction_Drone" }
 data.bounding_box = { { -0.01, -0.01 }, { 0.01, 0.01 } }
 data.default_collision_mask = { not_colliding_with_itself = true, consider_tile_transitions = true, layers = {
