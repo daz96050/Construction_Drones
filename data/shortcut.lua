@@ -1,4 +1,5 @@
-local path = util.path("data/units/construction_drone/")
+local shared = require("shared")
+local path = shared.mod_path .. "data/units/construction_drone/"
 
 local icon = {
     filename = path .. "construction_drone_icon.png",

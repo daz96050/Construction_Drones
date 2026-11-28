@@ -1,5 +1,7 @@
 -- Shared data interface between data and script, notably prototype names.
 local data = {}
+-- Root of this mod's files, for sprite and icon paths in the data stage.
+data.mod_path = "__Construction_Drones_Forked__/"
 data.drones = {}
 
 -- Drone stats for a quality level (normal 0, uncommon 1, rare 2, epic 3, legendary 5 in vanilla).

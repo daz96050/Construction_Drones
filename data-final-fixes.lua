@@ -1,4 +1,3 @@
-util = require "__Construction_Drones_Forked__/data/tf_util/tf_util"
 local collision_mask_util = require("collision-mask-util")
 local shared = require("shared")
 

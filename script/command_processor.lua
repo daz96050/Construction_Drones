@@ -973,7 +973,7 @@ process_deconstruct_cliff_command = function(drone_data)
     end
     local index = unique_index(target)
     get_drone_inventory(drone_data).remove { name = target.prototype.cliff_explosive_prototype, count = 1 }
-    target.surface.create_entity { name = "ground-explosion", position = util.center(target.bounding_box) }
+    target.surface.create_entity { name = "ground-explosion", position = script_util.center(target.bounding_box) }
     target.destroy({ do_cliff_correction = true })
     data.already_targeted[index] = nil
     -- print("Cliff destroyed, heading home bois. ")

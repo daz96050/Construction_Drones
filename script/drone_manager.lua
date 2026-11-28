@@ -342,7 +342,7 @@ move_to_player = function(drone_data, player)
         logs.trace("Drone is on a different surface, cannot move to player")
         return -- tell the caller you can't get to the player
     end
-    if distance(drone.position, player.physical_position) < 2 then
+    if util.distance(drone.position, player.physical_position) < 2 then
         logs.trace("drone distance is < 2 from player")
         return true -- tell the caller you're already at the player
     end
